@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>学祭迷路サンプル</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; }
+    #game p { font-size: 1.2em; }
+    .keyword { color: green; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>QR迷路ゲーム</h1>
+  <div id="game"></div>
+
+  <script>
+    // 1. URLからトークン取得
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    // 2. QR専用トークン一覧
+    const tokens = {
+      'START123': 'start',
+      'QUIZ1ABC': 'quiz1',
+      'QUIZ2XYZ': 'quiz2',
+      'QUIZ3DEF': 'quiz3'
+    };
+
+    // 3. トークンチェック
+    if (!tokens[token]) {
+      document.body.innerHTML = "<h2>このページにはアクセスできません</h2>";
+    } else {
+      const type = tokens[token];
+      const gameDiv = document.getElementById('game');
+
+      if(type === 'start') {
+        // スタートQR
+        gameDiv.innerHTML = `
+          <p>ゲームスタート！タイマー開始！</p>
+          <p id="timer">0秒</p>
+          <button onclick="location.href='index.html?token=QUIZ1ABC'">次のQRへ</button>
+        `;
+        // タイマー開始
+        let seconds = 0;
+        setInterval(() => {
+          seconds++;
+          document.getElementById('timer').innerText = seconds + "秒";
+        }, 1000);
+
+      } else if(type.startsWith('quiz')) {
+        // クイズQR
+        const quizzes = {
+          'quiz1': { q: "2+2は？", a: "4", keyword: "A" },
+          'quiz2': { q: "色の三原色の一つは？", a: "赤", keyword: "B" },
+          'quiz3': { q: "太陽系で一番大きい惑星は？", a: "木星", keyword: "C" }
+        };
+        const quiz = quizzes[type];
+        gameDiv.innerHTML = `
+          <p>${quiz.q}</p>
+          <input id="answer" placeholder="答えを入力">
+          <button id="submit">送信</button>
+          <p id="result"></p>
+        `;
+        document.getElementById('submit').onclick = () => {
+          const ans = document.getElementById('answer').value.trim();
+          if(ans === quiz.a) {
+            document.getElementById('result').innerHTML = `正解！キーワード獲得：<span class="keyword">${quiz.keyword}</span>`;
+          } else {
+            document.getElementById('result').innerText = "不正解…もう一度考えよう！";
+          }
+        };
+      }
+    }
+  </script>
+</body>
+</html>
