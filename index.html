@@ -2,118 +2,50 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>迷路QRゲームサンプル</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+<title>迷路QRゲームサンプル（クイズのみ）</title>
 <style>
-  body { margin:0; overflow:hidden; font-family:sans-serif; }
-  #info { position:absolute; top:10px; left:10px; background:rgba(255,255,255,0.8); padding:10px; z-index:10; }
-  button { font-size:16px; padding:5px 10px; margin-top:10px; }
+  body { margin:0; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; }
+  #container { text-align:center; }
+  button { font-size:16px; padding:10px 20px; margin-top:20px; }
 </style>
 </head>
 <body>
-<div id="info">迷路QRゲームサンプル</div>
+<div id="container">
+  <h1>迷路QRゲームサンプル</h1>
+  <div id="quizArea"></div>
+</div>
 
 <script>
 const params = new URLSearchParams(window.location.search);
-
-let capture;
 let keywordCollected = false;
 
-// ARマーク画像
-let markImgs = [];
-function preload() {
-  markImgs[1] = loadImage('https://i.imgur.com/3X5v7Zy.png'); // AR1
-  markImgs[2] = loadImage('https://i.imgur.com/I1pQk3G.png'); // AR2
-  markImgs[3] = loadImage('https://i.imgur.com/0kXNx5K.png'); // AR3
+const quizArea = document.getElementById("quizArea");
+
+// スタートページ
+if(params.get("s")) {
+  quizArea.innerHTML = "<h2>タイマースタート！</h2>";
 }
 
-function setup() {
-  createCanvas(windowWidth, windowHeight);
+// クイズページ
+else if(params.get("q")) {
+  let quizNum = params.get("q");
+  quizArea.innerHTML = `<h2>クイズ${quizNum}</h2>
+    <p>正解ボタンを押してキーワード獲得</p>
+    <button id="correctBtn">正解</button>
+    <p id="status"></p>`;
 
-  // ARページの場合はカメラ起動
- if(params.get("ar")) {
-  let constraints = {
-    video: { facingMode: { exact: "environment" } } // 外カメラ
-  };
-  capture = createCapture(constraints);
-  capture.size(windowWidth, windowHeight);
-  capture.hide();
-}
-}
-
-function draw() {
-  background(255);
-
-  // スタートページ
-  if(params.get("s")) {
-    fill(0);
-    textSize(30);
-    textAlign(CENTER);
-    text("タイマースタート！", width/2, height/2);
-  }
-
-  // クイズページ
-  else if(params.get("q")) {
-    let quizNum = params.get("q");
-    fill(0);
-    textSize(25);
-    textAlign(CENTER);
-    text(`クイズ${quizNum}`, width/2, height/2-30);
-    text("正解ボタンを押してキーワード獲得", width/2, height/2+10);
-
-    // 正解ボタン
+  document.getElementById("correctBtn").addEventListener("click", () => {
     if(!keywordCollected){
-      fill(0,200,0);
-      rect(width/2-60, height/2+40, 120, 40, 10);
-      fill(255);
-      textSize(18);
-      text("正解", width/2, height/2+65);
-    } else {
-      fill(0);
-      textSize(20);
-      text("キーワードを獲得しました🎉", width/2, height/2+65);
+      localStorage.setItem(`keyword_q${quizNum}`, "獲得済");
+      keywordCollected = true;
+      document.getElementById("status").textContent = "キーワードを獲得しました🎉";
     }
-  }
-
-  // ARページ
-  else if(params.get("ar")) {
-    let arNum = params.get("ar");
-    image(capture, 0, 0, width, height);
-    image(markImgs[arNum], width*0.6, height*0.6, 150, 150);
-
-    fill(255, 255, 255, 200);
-    textSize(20);
-    textAlign(CENTER);
-    if(!keywordCollected){
-      text("マークをタップしてキーワード獲得！", width/2, height*0.5);
-    } else {
-      text("キーワードを獲得しました🎉", width/2, height*0.5);
-    }
-  }
-
-  // それ以外
-  else {
-    fill(0);
-    textSize(25);
-    textAlign(CENTER);
-    text("QRコードを読み込んでください", width/2, height/2);
-  }
+  });
 }
 
-// マウスクリックでキーワード獲得
-function mousePressed() {
-  if(params.get("q") && !keywordCollected){
-    let qNum = params.get("q");
-    localStorage.setItem(`keyword_q${qNum}`, "獲得済");
-    keywordCollected = true;
-    alert(`クイズ${qNum}のキーワードを獲得しました🎉`);
-  } 
-  else if(params.get("ar") && !keywordCollected){
-    let arNum = params.get("ar");
-    localStorage.setItem(`keyword_ar${arNum}`, "獲得済");
-    keywordCollected = true;
-    alert(`AR${arNum}のキーワードを獲得しました🎉`);
-  }
+// その他ページ
+else {
+  quizArea.innerHTML = "<h2>QRコードを読み込んでください</h2>";
 }
 </script>
 </body>
