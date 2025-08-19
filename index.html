@@ -68,8 +68,12 @@
       timerInterval = setInterval(updateTimer, 1000);
     }
 
-    function startGame() {
+    function resetGame() {
+      startTime = Date.now();
+      localStorage.setItem('startTime', startTime);
+      clearInterval(timerInterval);
       startTimer();
+
       keywords = [];
       items = [];
       coins = 0;
@@ -77,10 +81,14 @@
       localStorage.setItem('items', JSON.stringify(items));
       localStorage.setItem('coins', coins);
 
-      gameDiv.innerHTML = "<p>ゲームスタート！QRを探してアイテムやコインをゲット！</p>";
+      gameDiv.innerHTML = "<p>新しいゲームがスタートしました！QRを探してアイテムやコインをゲット！</p>";
       cameraDiv.style.display = "none";
       gameDiv.style.display = "block";
       updateInventory();
+    }
+
+    function startGame() {
+      resetGame();
     }
 
     function collectCoin() {
@@ -96,6 +104,8 @@
         localStorage.setItem('items', JSON.stringify(items));
         updateInventory();
         showAREffect("item.png");
+      } else {
+        alert("このアイテムはすでに持っています！");
       }
     }
 
@@ -118,9 +128,7 @@
         localStorage.setItem('items', JSON.stringify(items));
         updateInventory();
         gameDiv.innerHTML = "<p>次のQRコードを探そう！</p>";
-      } else { 
-        alert("不正解…"); 
-      }
+      } else { alert("不正解…"); }
     }
 
     function showAREffect(imgSrc){
@@ -178,10 +186,21 @@
 
     function handleQR(data){
       const params = new URLSearchParams(data.split("?")[1]);
+
+      // スタート地点 → タイマーリセット
+      if(params.has("start")){
+        resetGame();
+        alert("スタート地点に到着！タイマーをリセットしました⏱️");
+        return;
+      }
+
       if(params.has("coin")) collectCoin();
       if(params.has("item")) collectItem(params.get("item"));
       if(params.has("q")) showQuiz(params.get("q"));
-      if(params.has("goal")) alert("ゴールに到達！");
+      if(params.has("goal")) {
+        clearInterval(timerInterval);
+        alert("ゴールに到達！クリアタイム: " + timerDiv.textContent);
+      }
     }
 
     // ページ読み込み時にタイマー復元
