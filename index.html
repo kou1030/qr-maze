@@ -12,15 +12,26 @@
 <body>
   <h1>学祭迷路ゲーム</h1>
   <div id="game"></div>
+  <div id="timer" style="font-size: 18px; margin-top: 10px;"></div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
     const gameDiv = document.getElementById("game");
+    const timerDiv = document.getElementById("timer");
     let startTime;
+    let timerInterval;
 
     function startTimer() {
       startTime = Date.now();
       gameDiv.innerHTML = "<p>タイマーがスタートしました！迷路に挑戦！</p>";
+
+      // タイマーをリアルタイム表示
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        timerDiv.textContent = `経過時間: ${minutes}分 ${seconds}秒`;
+      }, 1000);
     }
 
     function showQuiz(num) {
@@ -59,6 +70,15 @@
       }
     }
 
+    function showGoal() {
+      clearInterval(timerInterval); // タイマー停止
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const minutes = Math.floor(elapsed / 60);
+      const seconds = elapsed % 60;
+      gameDiv.innerHTML = `<h2>ゴール！</h2><p>クリアタイム: ${minutes}分 ${seconds}秒</p>`;
+      timerDiv.textContent = "";
+    }
+
     // ルーティング処理
     if(params.has("s")){
       startTimer();
@@ -66,6 +86,9 @@
     else if(params.has("q")){
       const qNum = params.get("q");
       showQuiz(qNum);
+    }
+    else if(params.has("goal")){
+      showGoal();
     }
     else {
       gameDiv.innerHTML = "<p>スタートQRを読み取ってゲームを始めてください</p>";
