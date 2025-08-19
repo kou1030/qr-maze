@@ -6,6 +6,7 @@
   <style>
     body { font-family: sans-serif; text-align: center; margin: 40px; }
     #game { margin-top: 20px; }
+    #inventory { margin-top: 20px; font-size: 16px; text-align: left; display: inline-block; }
     button { padding: 10px 20px; margin: 10px; font-size: 16px; }
   </style>
 </head>
@@ -13,13 +14,20 @@
   <h1>学祭迷路ゲーム</h1>
   <div id="game"></div>
   <div id="timer" style="font-size: 18px; margin-top: 10px;"></div>
+  <div id="inventory"></div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
     const gameDiv = document.getElementById("game");
     const timerDiv = document.getElementById("timer");
+    const inventoryDiv = document.getElementById("inventory");
+
     let startTime;
     let timerInterval;
+
+    // キーワード・アイテム管理
+    let keywords = [];
+    let items = [];
 
     function startTimer() {
       startTime = Date.now();
@@ -63,14 +71,36 @@
 
     function answer(correct) {
       if(correct){
-        alert("正解！キーワードを獲得しました🎉");
+        alert("正解！キーワードやアイテムを獲得しました🎉");
+
+        const qNum = params.get("q");
+        // クイズに応じてキーワード・アイテムを追加
+        if(qNum === "1") keywords.push("祭の月");
+        else if(qNum === "2") items.push("QRの知識");
+        else if(qNum === "3") keywords.push("プログラミング");
+
+        updateInventory(); // 画面に反映
         gameDiv.innerHTML = "<p>次のQRコードを探そう！</p>";
       } else {
         alert("不正解…もう一度挑戦してみてね。");
       }
     }
 
+    function updateInventory() {
+      let html = "<h3>獲得アイテム・キーワード</h3><ul>";
+      keywords.forEach(k => html += `<li>キーワード: ${k}</li>`);
+      items.forEach(i => html += `<li>アイテム: ${i}</li>`);
+      html += "</ul>";
+      inventoryDiv.innerHTML = html;
+    }
+
     function showGoal() {
+      // ゴール条件：特定キーワードが必要
+      if(!keywords.includes("祭の月")){
+        gameDiv.innerHTML = "<p>まだ必要なキーワードを集めていません！</p>";
+        return;
+      }
+
       clearInterval(timerInterval); // タイマー停止
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       const minutes = Math.floor(elapsed / 60);
@@ -93,6 +123,7 @@
     else {
       gameDiv.innerHTML = "<p>スタートQRを読み取ってゲームを始めてください</p>";
     }
+
   </script>
 </body>
 </html>
