@@ -21,6 +21,7 @@
   <h1>学祭迷路ゲーム AR対応版</h1>
   <div id="timer"></div>
   <div>
+    <button onclick="startGame()">ゲームスタート</button>
     <button onclick="startCamera()">カメラモード</button>
   </div>
   <div id="game"></div>
@@ -67,7 +68,8 @@
       timerInterval = setInterval(updateTimer, 1000);
     }
 
-    function resetGame() {
+    function startGame() {
+      // スタート時にタイマー・ゲーム状態をリセット
       startTime = Date.now();
       localStorage.setItem('startTime', startTime);
       keywords = [];
@@ -78,6 +80,8 @@
       localStorage.setItem('coins', coins);
 
       gameDiv.innerHTML = "<p>ゲームスタート！QRを探してアイテムやコインをゲット！</p>";
+      cameraDiv.style.display = "none";
+      gameDiv.style.display = "block";
       startTimer();
       updateInventory();
     }
@@ -130,12 +134,12 @@
     function startCamera(){
       gameDiv.style.display = "none";
       cameraDiv.style.display = "block";
-      cameraDiv.innerHTML = '<button onclick="closeCamera()">カメラを閉じる</button>';
       startTimer();
 
       const video = document.createElement("video");
       video.setAttribute("autoplay","");
       video.setAttribute("playsinline","");
+      cameraDiv.innerHTML = "";
       cameraDiv.appendChild(video);
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -157,15 +161,8 @@
       scanQR();
     }
 
-    function closeCamera(){
-      cameraDiv.style.display = "none";
-      gameDiv.style.display = "block";
-      cameraDiv.innerHTML = "";
-    }
-
     function handleQR(data){
       const params = new URLSearchParams(data.split("?")[1]);
-      if(params.has("start")) resetGame();      // スタートQRでリセット
       if(params.has("coin")) collectCoin();
       if(params.has("item")) collectItem(params.get("item"));
       if(params.has("q")) showQuiz(params.get("q"));
