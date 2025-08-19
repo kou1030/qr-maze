@@ -29,15 +29,14 @@
   <div id="cameraMode" style="display:none;"></div>
   <div id="inventory"></div>
 
-  <!-- jsQRライブラリ -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-
   <script>
     let keywords = JSON.parse(localStorage.getItem('keywords') || '[]');
     let items = JSON.parse(localStorage.getItem('items') || '[]');
     let coins = parseInt(localStorage.getItem('coins') || '0');
     let startTime = parseInt(localStorage.getItem('startTime') || '0');
     let timerInterval;
+    let lastQR = ""; // 同じQR連続読み取り防止
 
     const timerDiv = document.getElementById("timer");
     const gameDiv = document.getElementById("game");
@@ -68,33 +67,32 @@
       timerInterval = setInterval(updateTimer, 1000);
     }
 
-    // スタートQRでゲームを完全リセット
+    // ゲームリセット（スタートQR用）
     function resetGame() {
-      // タイマー停止
       clearInterval(timerInterval);
+
+      // localStorage削除
+      localStorage.removeItem('keywords');
+      localStorage.removeItem('items');
+      localStorage.removeItem('coins');
+      localStorage.removeItem('startTime');
 
       // データ初期化
       keywords = [];
       items = [];
       coins = 0;
+      startTime = Date.now();
 
-      // localStorageに保存
+      // 保存
       localStorage.setItem('keywords', JSON.stringify(keywords));
       localStorage.setItem('items', JSON.stringify(items));
       localStorage.setItem('coins', coins);
-
-      // タイマーリセット
-      startTime = Date.now();
       localStorage.setItem('startTime', startTime);
 
-      // 画面更新
       updateInventory();
       updateTimer();
-
-      // タイマー再スタート
       startTimer();
 
-      // ゲーム画面表示
       gameDiv.innerHTML = "<p>新しいゲームがスタートしました！QRを探してアイテムやコインをゲット！</p>";
       cameraDiv.style.display = "none";
       gameDiv.style.display = "block";
@@ -193,30 +191,25 @@
     }
 
     function handleQR(data){
-      const params = new URLSearchParams(data.split("?")[1]);
+      // 同じQR連続読み取り防止
+      if(data === lastQR) return;
+      lastQR = data;
+      setTimeout(()=>{ lastQR=""; }, 2000); // 2秒後にリセット
 
-      // スタートQRで完全リセット
-      if(params.has("start")){
-        resetGame();
-        alert("スタート地点に到着！タイマーとデータをリセットしてゲーム開始⏱️");
-        return;
-      }
+      const params = new URLSearchParams((data.split("?")[1]) || "");
 
+      if(params.has("start")) { resetGame(); alert("スタート地点！"); return; }
       if(params.has("coin")) collectCoin();
       if(params.has("item")) collectItem(params.get("item"));
       if(params.has("q")) showQuiz(params.get("q"));
-      if(params.has("goal")) {
-        clearInterval(timerInterval);
-        alert("ゴールに到達！クリアタイム: " + timerDiv.textContent);
-      }
+      if(params.has("goal")) { clearInterval(timerInterval); alert("ゴール到達！" + timerDiv.textContent); }
     }
 
-    // ページ読み込み時にタイマー復元
-    if(localStorage.getItem('startTime')){
-      startTime = parseInt(localStorage.getItem('startTime'));
-      startTimer();
-    }
-    updateInventory();
+    // ページロード時
+    window.addEventListener('load', () => {
+      updateInventory();
+      if(startTime) startTimer();
+    });
   </script>
 </body>
 </html>
