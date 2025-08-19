@@ -31,6 +31,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
   <script>
+    // ゲームデータ初期化
     let keywords = JSON.parse(localStorage.getItem('keywords') || '[]');
     let items = JSON.parse(localStorage.getItem('items') || '[]');
     let coins = parseInt(localStorage.getItem('coins') || '0');
@@ -67,32 +68,37 @@
       timerInterval = setInterval(updateTimer, 1000);
     }
 
-    // ゲームリセット（スタートQR用）
+    // スタートQR用リセット（完全リセット + タイマーゼロ + アイテム削除）
     function resetGame() {
       clearInterval(timerInterval);
 
-      // localStorage削除
+      // localStorageの関連データを削除
       localStorage.removeItem('keywords');
       localStorage.removeItem('items');
       localStorage.removeItem('coins');
       localStorage.removeItem('startTime');
 
-      // データ初期化
+      // グローバル変数初期化
       keywords = [];
       items = [];
       coins = 0;
-      startTime = Date.now();
+      startTime = Date.now(); // タイマーゼロから開始
 
-      // 保存
+      // 新しいデータ保存
       localStorage.setItem('keywords', JSON.stringify(keywords));
       localStorage.setItem('items', JSON.stringify(items));
       localStorage.setItem('coins', coins);
       localStorage.setItem('startTime', startTime);
 
+      // 在庫表示・タイマー更新
       updateInventory();
       updateTimer();
       startTimer();
 
+      // 前回読み取りQRリセット
+      lastQR = "";
+
+      // ゲーム画面更新
       gameDiv.innerHTML = "<p>新しいゲームがスタートしました！QRを探してアイテムやコインをゲット！</p>";
       cameraDiv.style.display = "none";
       gameDiv.style.display = "block";
@@ -198,11 +204,18 @@
 
       const params = new URLSearchParams((data.split("?")[1]) || "");
 
-      if(params.has("start")) { resetGame(); alert("スタート地点！"); return; }
+      if(params.has("start")) { 
+        resetGame(); 
+        alert("スタート地点！新しいゲームを開始しました。"); 
+        return; 
+      }
       if(params.has("coin")) collectCoin();
       if(params.has("item")) collectItem(params.get("item"));
       if(params.has("q")) showQuiz(params.get("q"));
-      if(params.has("goal")) { clearInterval(timerInterval); alert("ゴール到達！" + timerDiv.textContent); }
+      if(params.has("goal")) { 
+        clearInterval(timerInterval); 
+        alert("ゴール到達！" + timerDiv.textContent); 
+      }
     }
 
     // ページロード時
