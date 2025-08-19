@@ -2,48 +2,46 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>学祭迷路ゲーム</title>
+  <title>学祭迷路ゲーム AR対応版</title>
   <style>
     body { font-family: sans-serif; text-align: center; margin: 20px; }
-    #game { margin-top: 20px; position: relative; }
-    #timer { font-size: 18px; margin-top: 10px; position: fixed; top: 10px; right: 10px; background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 5px; z-index: 10; }
+    #game, #cameraMode { margin-top: 20px; position: relative; }
+    #timer { font-size: 18px; margin-top: 10px; }
     #inventory { margin-top: 20px; font-size: 16px; text-align: left; display: inline-block; }
     button { padding: 10px 20px; margin: 10px; font-size: 16px; }
-    video#camera { width: 100%; max-width: 600px; border: 2px solid #333; border-radius: 10px; }
-    canvas#arEffect { position: absolute; top:0; left:0; pointer-events: none; }
+    #cameraMode video { width: 100%; max-width: 400px; border: 1px solid #333; }
+    .arEffect { position: absolute; width: 80px; height: 80px; animation: pop 0.8s ease-out; }
+    @keyframes pop {
+      0% { transform: scale(0); opacity:1; }
+      100% { transform: scale(1.5); opacity:0; }
+    }
   </style>
 </head>
 <body>
-  <h1>学祭迷路ゲーム</h1>
+  <h1>学祭迷路ゲーム AR対応版</h1>
   <div id="timer"></div>
+  <div>
+    <button onclick="startGame()">ゲームスタート</button>
+    <button onclick="startCamera()">カメラモード</button>
+  </div>
   <div id="game"></div>
+  <div id="cameraMode" style="display:none;"></div>
   <div id="inventory"></div>
 
-  <script>
-    const gameDiv = document.getElementById("game");
-    const timerDiv = document.getElementById("timer");
-    const inventoryDiv = document.getElementById("inventory");
+  <!-- jsQRライブラリ -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
 
+  <script>
     let keywords = JSON.parse(localStorage.getItem('keywords') || '[]');
     let items = JSON.parse(localStorage.getItem('items') || '[]');
     let coins = parseInt(localStorage.getItem('coins') || '0');
     let startTime = parseInt(localStorage.getItem('startTime') || '0');
     let timerInterval;
 
-    // タイマー更新関数
-    function startTimer() {
-      if(!startTime) startTime = Date.now();
-      localStorage.setItem('startTime', startTime);
-
-      timerInterval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        const minutes = Math.floor(elapsed / 60);
-        const seconds = elapsed % 60;
-        timerDiv.textContent = `経過時間: ${minutes}分 ${seconds}秒`;
-      }, 1000);
-    }
-
-    startTimer(); // ページ読み込みでタイマー開始
+    const timerDiv = document.getElementById("timer");
+    const gameDiv = document.getElementById("game");
+    const cameraDiv = document.getElementById("cameraMode");
+    const inventoryDiv = document.getElementById("inventory");
 
     function updateInventory() {
       let html = "<h3>獲得アイテム・キーワード・コイン</h3><ul>";
@@ -53,116 +51,124 @@
       inventoryDiv.innerHTML = html;
     }
 
-    updateInventory();
-
-    // ホーム画面
-    function showHome() {
-      gameDiv.innerHTML = `
-        <p>スタートQRを読み取ってゲームを始めてください</p>
-        <button onclick="startCameraMode()">カメラモード</button>
-      `;
+    function updateTimer() {
+      if(!startTime) return;
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const minutes = Math.floor(elapsed / 60);
+      const seconds = elapsed % 60;
+      timerDiv.textContent = `経過時間: ${minutes}分 ${seconds}秒`;
     }
 
-    // QRクイズ・アイテム・コイン管理
-    function showQuiz(num) {
-      if (num === "1") gameDiv.innerHTML = `
-        <h2>クイズ1</h2>
-        <p>大学祭は何月に開催されることが多い？</p>
-        <button onclick="answer(true,1)">10月〜11月</button>
-        <button onclick="answer(false,1)">1月</button>`;
-      else if (num === "2") gameDiv.innerHTML = `
-        <h2>クイズ2</h2>
-        <p>QRコードを発明したのはどこの国？</p>
-        <button onclick="answer(true,2)">日本</button>
-        <button onclick="answer(false,2)">アメリカ</button>`;
-      else if (num === "3") gameDiv.innerHTML = `
-        <h2>クイズ3</h2>
-        <p>次のうちプログラミング言語はどれ？</p>
-        <button onclick="answer(true,3)">JavaScript</button>
-        <button onclick="answer(false,3)">Photoshop</button>`;
+    function startTimer() {
+      if(!startTime) {
+        startTime = Date.now();
+        localStorage.setItem('startTime', startTime);
+      }
+      clearInterval(timerInterval);
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function startGame() {
+      startTimer();
+      keywords = [];
+      items = [];
+      coins = 0;
+      localStorage.setItem('keywords', JSON.stringify(keywords));
+      localStorage.setItem('items', JSON.stringify(items));
+      localStorage.setItem('coins', coins);
+
+      gameDiv.innerHTML = "<p>ゲームスタート！QRを探してアイテムやコインをゲット！</p>";
+      cameraDiv.style.display = "none";
+      gameDiv.style.display = "block";
       updateInventory();
+    }
+
+    function collectCoin() {
+      coins += 1;
+      localStorage.setItem('coins', coins);
+      updateInventory();
+      showAREffect("coin.png");
+    }
+
+    function collectItem(itemName) {
+      if(!items.includes(itemName)) items.push(itemName);
+      localStorage.setItem('items', JSON.stringify(items));
+      updateInventory();
+      showAREffect("item.png");
+    }
+
+    function showQuiz(num) {
+      let html = "";
+      if(num === "1") html = `<h2>クイズ1</h2><p>大学祭は何月？</p><button onclick="answer(true,1)">10月〜11月</button><button onclick="answer(false,1)">1月</button>`;
+      if(num === "2") html = `<h2>クイズ2</h2><p>QRコード発明国は？</p><button onclick="answer(true,2)">日本</button><button onclick="answer(false,2)">アメリカ</button>`;
+      if(num === "3") html = `<h2>クイズ3</h2><p>プログラミング言語は？</p><button onclick="answer(true,3)">JavaScript</button><button onclick="answer(false,3)">Photoshop</button>`;
+      gameDiv.innerHTML = html;
     }
 
     function answer(correct, qNum){
       if(correct){
-        alert("正解！キーワードやアイテムを獲得しました🎉");
+        alert("正解！アイテムやキーワードを獲得🎉");
         if(qNum===1) keywords.push("祭の月");
-        else if(qNum===2) items.push("QRの知識");
-        else if(qNum===3) keywords.push("プログラミング");
-
+        if(qNum===2) items.push("QRの知識");
+        if(qNum===3) keywords.push("プログラミング");
         localStorage.setItem('keywords', JSON.stringify(keywords));
         localStorage.setItem('items', JSON.stringify(items));
         updateInventory();
         gameDiv.innerHTML = "<p>次のQRコードを探そう！</p>";
-      } else {
-        alert("不正解…もう一度挑戦してみてね。");
-      }
+      } else { alert("不正解…"); }
     }
 
-    function collectCoin(){
-      coins += 1;
-      localStorage.setItem('coins', coins);
-      updateInventory();
-      alert("コインを獲得しました🎉");
+    function showAREffect(imgSrc){
+      const img = document.createElement("img");
+      img.src = imgSrc;
+      img.className = "arEffect";
+      img.style.top = Math.random()*200+"px";
+      img.style.left = Math.random()*200+"px";
+      cameraDiv.appendChild(img);
+      setTimeout(()=>{ cameraDiv.removeChild(img); },800);
     }
 
-    function collectItem(itemName){
-      if(!items.includes(itemName)) items.push(itemName);
-      localStorage.setItem('items', JSON.stringify(items));
-      updateInventory();
-      alert(`アイテム「${itemName}」を獲得しました🎉`);
-    }
+    function startCamera(){
+      gameDiv.style.display = "none";
+      cameraDiv.style.display = "block";
+      startTimer();
 
-    function showGoal(){
-      if(!keywords.includes("祭の月")){
-        gameDiv.innerHTML = "<p>まだ必要なキーワードを集めていません！</p>";
-        updateInventory();
-        return;
-      }
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      const minutes = Math.floor(elapsed / 60);
-      const seconds = elapsed % 60;
-      gameDiv.innerHTML = `<h2>ゴール！</h2><p>クリアタイム: ${minutes}分 ${seconds}秒</p>`;
-      updateInventory();
-    }
-
-    // カメラモード
-    function startCameraMode(){
-      gameDiv.innerHTML = `
-        <video id="camera" autoplay playsinline></video>
-        <canvas id="arEffect"></canvas>
-        <p>カメラを使ってQRコードを読み取ろう！</p>
-        <button onclick="showHome()">ホームに戻る</button>
-      `;
-
-      const video = document.getElementById("camera");
-      const canvas = document.getElementById("arEffect");
+      const video = document.createElement("video");
+      video.setAttribute("autoplay","");
+      video.setAttribute("playsinline","");
+      cameraDiv.innerHTML = "";
+      cameraDiv.appendChild(video);
+      const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 
       navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-        .then(stream => {
-          video.srcObject = stream;
-          video.addEventListener("loadedmetadata", ()=>{
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-          });
-        })
-        .catch(err => alert("カメラ起動失敗: "+err));
+        .then(stream => { video.srcObject = stream; })
+        .catch(err => alert("カメラにアクセスできません"));
 
-      // 簡易ARエフェクト（例: 点滅する円）
-      function drawEffect(){
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.fillStyle = `rgba(255,255,0,0.5)`;
-        ctx.beginPath();
-        ctx.arc(canvas.width/2,canvas.height/2,50+Math.sin(Date.now()/200)*20,0,Math.PI*2);
-        ctx.fill();
-        requestAnimationFrame(drawEffect);
+      function scanQR(){
+        if(video.readyState===video.HAVE_ENOUGH_DATA){
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video,0,0,canvas.width,canvas.height);
+          const code = jsQR(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height);
+          if(code){ handleQR(code.data); }
+        }
+        requestAnimationFrame(scanQR);
       }
-      drawEffect();
+      scanQR();
     }
 
-    // ページロード時はホーム表示
-    showHome();
+    function handleQR(data){
+      const params = new URLSearchParams(data.split("?")[1]);
+      if(params.has("coin")) collectCoin();
+      if(params.has("item")) collectItem(params.get("item"));
+      if(params.has("q")) showQuiz(params.get("q"));
+      if(params.has("goal")) alert("ゴールに到達！"); 
+    }
+
+    // ページ読み込み時にタイマー復元
+    if(localStorage.getItem('startTime')){ startTime = parseInt(localStorage.getItem('startTime')); startTimer(); }
+    updateInventory();
   </script>
 </body>
 </html>
