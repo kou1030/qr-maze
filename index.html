@@ -21,10 +21,11 @@
   <h1>学祭迷路ゲーム AR対応版</h1>
   <div id="timer"></div>
   <div>
-    <button onclick="startGame()">ゲームスタート</button>
     <button onclick="startCamera()">カメラモード</button>
   </div>
-  <div id="game"></div>
+  <div id="game">
+    <p>スタート地点のQRコードを読み込んでゲームを開始してください！</p>
+  </div>
   <div id="cameraMode" style="display:none;"></div>
   <div id="inventory"></div>
 
@@ -85,10 +86,6 @@
       cameraDiv.style.display = "none";
       gameDiv.style.display = "block";
       updateInventory();
-    }
-
-    function startGame() {
-      resetGame();
     }
 
     function collectCoin() {
@@ -187,10 +184,10 @@
     function handleQR(data){
       const params = new URLSearchParams(data.split("?")[1]);
 
-      // スタート地点 → タイマーリセット
+      // スタート地点 → タイマーリセット & データ初期化
       if(params.has("start")){
         resetGame();
-        alert("スタート地点に到着！タイマーをリセットしました⏱️");
+        alert("スタート地点に到着！タイマーをリセットしてゲーム開始⏱️");
         return;
       }
 
