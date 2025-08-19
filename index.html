@@ -6,6 +6,7 @@
   <style>
     body { font-family: sans-serif; text-align: center; margin: 40px; }
     #game { margin-top: 20px; }
+    #timer { font-size: 18px; margin-top: 10px; }
     #inventory { margin-top: 20px; font-size: 16px; text-align: left; display: inline-block; }
     button { padding: 10px 20px; margin: 10px; font-size: 16px; }
   </style>
@@ -13,7 +14,7 @@
 <body>
   <h1>学祭迷路ゲーム</h1>
   <div id="game"></div>
-  <div id="timer" style="font-size: 18px; margin-top: 10px;"></div>
+  <div id="timer"></div>
   <div id="inventory"></div>
 
   <script>
@@ -29,11 +30,19 @@
     let keywords = [];
     let items = [];
 
+    function updateInventory() {
+      let html = "<h3>獲得アイテム・キーワード</h3><ul>";
+      keywords.forEach(k => html += `<li>キーワード: ${k}</li>`);
+      items.forEach(i => html += `<li>アイテム: ${i}</li>`);
+      html += "</ul>";
+      inventoryDiv.innerHTML = html;
+    }
+
     function startTimer() {
       startTime = Date.now();
       gameDiv.innerHTML = "<p>タイマーがスタートしました！迷路に挑戦！</p>";
+      updateInventory(); // スタート時に空リスト表示
 
-      // タイマーをリアルタイム表示
       timerInterval = setInterval(() => {
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
         const minutes = Math.floor(elapsed / 60);
@@ -50,16 +59,14 @@
           <button onclick="answer(true)">10月〜11月</button>
           <button onclick="answer(false)">1月</button>
         `;
-      }
-      else if (num === "2") {
+      } else if (num === "2") {
         gameDiv.innerHTML = `
           <h2>クイズ2</h2>
           <p>QRコードを発明したのはどこの国？</p>
           <button onclick="answer(true)">日本</button>
           <button onclick="answer(false)">アメリカ</button>
         `;
-      }
-      else if (num === "3") {
+      } else if (num === "3") {
         gameDiv.innerHTML = `
           <h2>クイズ3</h2>
           <p>次のうちプログラミング言語はどれ？</p>
@@ -74,7 +81,6 @@
         alert("正解！キーワードやアイテムを獲得しました🎉");
 
         const qNum = params.get("q");
-        // クイズに応じてキーワード・アイテムを追加
         if(qNum === "1") keywords.push("祭の月");
         else if(qNum === "2") items.push("QRの知識");
         else if(qNum === "3") keywords.push("プログラミング");
@@ -86,18 +92,10 @@
       }
     }
 
-    function updateInventory() {
-      let html = "<h3>獲得アイテム・キーワード</h3><ul>";
-      keywords.forEach(k => html += `<li>キーワード: ${k}</li>`);
-      items.forEach(i => html += `<li>アイテム: ${i}</li>`);
-      html += "</ul>";
-      inventoryDiv.innerHTML = html;
-    }
-
     function showGoal() {
-      // ゴール条件：特定キーワードが必要
       if(!keywords.includes("祭の月")){
         gameDiv.innerHTML = "<p>まだ必要なキーワードを集めていません！</p>";
+        updateInventory(); // ゴール前でも表示
         return;
       }
 
@@ -106,22 +104,22 @@
       const minutes = Math.floor(elapsed / 60);
       const seconds = elapsed % 60;
       gameDiv.innerHTML = `<h2>ゴール！</h2><p>クリアタイム: ${minutes}分 ${seconds}秒</p>`;
+      updateInventory(); // ゴールでも獲得リストを表示
       timerDiv.textContent = "";
     }
 
     // ルーティング処理
     if(params.has("s")){
       startTimer();
-    }
-    else if(params.has("q")){
+    } else if(params.has("q")){
       const qNum = params.get("q");
       showQuiz(qNum);
-    }
-    else if(params.has("goal")){
+      updateInventory(); // クイズ画面でも獲得状況表示
+    } else if(params.has("goal")){
       showGoal();
-    }
-    else {
+    } else {
       gameDiv.innerHTML = "<p>スタートQRを読み取ってゲームを始めてください</p>";
+      updateInventory(); // 初期画面でも空リスト表示
     }
 
   </script>
