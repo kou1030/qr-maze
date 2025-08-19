@@ -32,6 +32,9 @@ function setup() {
 
   // ARページの場合はカメラ起動
   if(params.get("ar")) {
+  let constraints = {
+    video: { facingMode: { exact: "environment" } } // 外カメラ
+  };
     capture = createCapture(VIDEO);
     capture.size(windowWidth, windowHeight);
     capture.hide();
