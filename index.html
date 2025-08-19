@@ -69,9 +69,7 @@
     }
 
     function startGame() {
-      // スタート時にタイマー・ゲーム状態をリセット
-      startTime = Date.now();
-      localStorage.setItem('startTime', startTime);
+      startTimer();
       keywords = [];
       items = [];
       coins = 0;
@@ -82,7 +80,6 @@
       gameDiv.innerHTML = "<p>ゲームスタート！QRを探してアイテムやコインをゲット！</p>";
       cameraDiv.style.display = "none";
       gameDiv.style.display = "block";
-      startTimer();
       updateInventory();
     }
 
@@ -170,10 +167,7 @@
     }
 
     // ページ読み込み時にタイマー復元
-    if(localStorage.getItem('startTime')){
-      startTime = parseInt(localStorage.getItem('startTime'));
-      startTimer();
-    }
+    if(localStorage.getItem('startTime')){ startTime = parseInt(localStorage.getItem('startTime')); startTimer(); }
     updateInventory();
   </script>
 </body>
