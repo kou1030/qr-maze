@@ -44,6 +44,7 @@
     const cameraDiv = document.getElementById("cameraMode");
     const inventoryDiv = document.getElementById("inventory");
 
+    // 在庫表示
     function updateInventory() {
       let html = "<h3>獲得アイテム・キーワード・コイン</h3><ul>";
       keywords.forEach(k => html += `<li>キーワード: ${k}</li>`);
@@ -52,6 +53,7 @@
       inventoryDiv.innerHTML = html;
     }
 
+    // タイマー更新
     function updateTimer() {
       if(!startTime) return;
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
@@ -60,32 +62,42 @@
       timerDiv.textContent = `経過時間: ${minutes}分 ${seconds}秒`;
     }
 
+    // タイマー開始
     function startTimer() {
-      if(!startTime) {
-        startTime = Date.now();
-        localStorage.setItem('startTime', startTime);
-      }
       clearInterval(timerInterval);
       timerInterval = setInterval(updateTimer, 1000);
     }
 
+    // スタートQRでゲームを完全リセット
     function resetGame() {
-      startTime = Date.now();
-      localStorage.setItem('startTime', startTime);
+      // タイマー停止
       clearInterval(timerInterval);
-      startTimer();
 
+      // データ初期化
       keywords = [];
       items = [];
       coins = 0;
+
+      // localStorageに保存
       localStorage.setItem('keywords', JSON.stringify(keywords));
       localStorage.setItem('items', JSON.stringify(items));
       localStorage.setItem('coins', coins);
 
+      // タイマーリセット
+      startTime = Date.now();
+      localStorage.setItem('startTime', startTime);
+
+      // 画面更新
+      updateInventory();
+      updateTimer();
+
+      // タイマー再スタート
+      startTimer();
+
+      // ゲーム画面表示
       gameDiv.innerHTML = "<p>新しいゲームがスタートしました！QRを探してアイテムやコインをゲット！</p>";
       cameraDiv.style.display = "none";
       gameDiv.style.display = "block";
-      updateInventory();
     }
 
     function collectCoin() {
@@ -141,7 +153,6 @@
     function startCamera(){
       gameDiv.style.display = "none";
       cameraDiv.style.display = "block";
-      startTimer();
 
       const video = document.createElement("video");
       video.setAttribute("autoplay","");
@@ -149,7 +160,7 @@
       cameraDiv.innerHTML = "";
       cameraDiv.appendChild(video);
 
-      // 閉じるボタン
+      // カメラ閉じるボタン
       const closeBtn = document.createElement("button");
       closeBtn.textContent = "カメラを閉じる";
       closeBtn.onclick = () => {
@@ -184,10 +195,10 @@
     function handleQR(data){
       const params = new URLSearchParams(data.split("?")[1]);
 
-      // スタート地点 → タイマーリセット & データ初期化
+      // スタートQRで完全リセット
       if(params.has("start")){
         resetGame();
-        alert("スタート地点に到着！タイマーをリセットしてゲーム開始⏱️");
+        alert("スタート地点に到着！タイマーとデータをリセットしてゲーム開始⏱️");
         return;
       }
 
