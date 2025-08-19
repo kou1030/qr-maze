@@ -23,14 +23,12 @@
     const timerDiv = document.getElementById("timer");
     const inventoryDiv = document.getElementById("inventory");
 
-    // LocalStorage から読み込み
     let keywords = JSON.parse(localStorage.getItem('keywords') || '[]');
     let items = JSON.parse(localStorage.getItem('items') || '[]');
     let coins = parseInt(localStorage.getItem('coins') || '0');
     let startTime = parseInt(localStorage.getItem('startTime') || '0');
     let timerInterval;
 
-    // インベントリ表示
     function updateInventory() {
       let html = "<h3>獲得アイテム・キーワード・コイン</h3><ul>";
       keywords.forEach(k => html += `<li>キーワード: ${k}</li>`);
@@ -40,10 +38,18 @@
       inventoryDiv.innerHTML = html;
     }
 
-    // タイマースタート
     function startTimer() {
-      if(!startTime) startTime = Date.now();
+      // ゲーム開始時にリセット
+      keywords = [];
+      items = [];
+      coins = 0;
+      localStorage.setItem('keywords', JSON.stringify(keywords));
+      localStorage.setItem('items', JSON.stringify(items));
+      localStorage.setItem('coins', coins);
+
+      startTime = Date.now();
       localStorage.setItem('startTime', startTime);
+
       gameDiv.innerHTML = "<p>タイマーがスタートしました！迷路に挑戦！</p>";
       updateInventory();
 
@@ -55,23 +61,22 @@
       }, 1000);
     }
 
-    // クイズ表示
     function showQuiz(num) {
-      if(num === "1") {
+      if (num === "1") {
         gameDiv.innerHTML = `
           <h2>クイズ1</h2>
           <p>大学祭は何月に開催されることが多い？</p>
           <button onclick="answer(true)">10月〜11月</button>
           <button onclick="answer(false)">1月</button>
         `;
-      } else if(num === "2") {
+      } else if (num === "2") {
         gameDiv.innerHTML = `
           <h2>クイズ2</h2>
           <p>QRコードを発明したのはどこの国？</p>
           <button onclick="answer(true)">日本</button>
           <button onclick="answer(false)">アメリカ</button>
         `;
-      } else if(num === "3") {
+      } else if (num === "3") {
         gameDiv.innerHTML = `
           <h2>クイズ3</h2>
           <p>次のうちプログラミング言語はどれ？</p>
@@ -82,7 +87,6 @@
       updateInventory();
     }
 
-    // クイズ回答
     function answer(correct) {
       if(correct){
         alert("正解！キーワードやアイテムを獲得しました🎉");
@@ -102,7 +106,6 @@
       }
     }
 
-    // コイン獲得
     function collectCoin() {
       coins += 1;
       localStorage.setItem('coins', coins);
@@ -110,7 +113,6 @@
       alert("コインを獲得しました🎉");
     }
 
-    // アイテム獲得（コインと同じ方式）
     function collectItem(itemName) {
       if(!items.includes(itemName)) items.push(itemName);
       localStorage.setItem('items', JSON.stringify(items));
@@ -118,42 +120,6 @@
       alert(`アイテム「${itemName}」を獲得しました🎉`);
     }
 
-    // 謎解きQR
-    function showPuzzle(num) {
-      if(num === "1") {
-        gameDiv.innerHTML = `
-          <h2>謎解き1</h2>
-          <p>この扉を開けるには「鍵」が必要です。</p>
-          <button onclick="solvePuzzle('鍵','扉のキーワード')">鍵を使う</button>
-          <button onclick="gameDiv.innerHTML='<p>もう一度QRを探そう！</p>'">戻る</button>
-        `;
-      } else if(num === "2") {
-        gameDiv.innerHTML = `
-          <h2>謎解き2</h2>
-          <p>この箱を開けるには「魔法の石」が必要です。</p>
-          <button onclick="solvePuzzle('魔法の石','箱のキーワード')">魔法の石を使う</button>
-          <button onclick="gameDiv.innerHTML='<p>もう一度QRを探そう！</p>'">戻る</button>
-        `;
-      }
-      updateInventory();
-    }
-
-    // 謎解き回答
-    function solvePuzzle(itemName, keyword) {
-      if(items.includes(itemName)) {
-        alert(`正解！キーワード「${keyword}」を獲得🎉`);
-        if(!keywords.includes(keyword)) {
-          keywords.push(keyword);
-          localStorage.setItem('keywords', JSON.stringify(keywords));
-        }
-        gameDiv.innerHTML = "<p>次のQRコードを探そう！</p>";
-        updateInventory();
-      } else {
-        alert(`アイテム「${itemName}」が必要です`);
-      }
-    }
-
-    // ゴール
     function showGoal() {
       if(!keywords.includes("祭の月")){
         gameDiv.innerHTML = "<p>まだ必要なキーワードを集めていません！</p>";
@@ -178,15 +144,12 @@
     else if(params.has("q")) showQuiz(params.get("q"));
     else if(params.has("coin")) collectCoin();
     else if(params.has("item")) collectItem(params.get("item"));
-    else if(params.has("puzzle")) showPuzzle(params.get("puzzle"));
     else if(params.has("goal")) showGoal();
     else {
       gameDiv.innerHTML = "<p>スタートQRを読み取ってゲームを始めてください</p>";
       updateInventory();
     }
 
-    // 初期表示
-    updateInventory();
   </script>
 </body>
 </html>
