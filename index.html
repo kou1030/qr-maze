@@ -23,6 +23,7 @@
     const timerDiv = document.getElementById("timer");
     const inventoryDiv = document.getElementById("inventory");
 
+    // localStorageから情報取得
     let keywords = JSON.parse(localStorage.getItem('keywords') || '[]');
     let items = JSON.parse(localStorage.getItem('items') || '[]');
     let coins = parseInt(localStorage.getItem('coins') || '0');
@@ -39,16 +40,18 @@
     }
 
     function startTimer() {
-      // ゲーム開始時にリセット
-      keywords = [];
-      items = [];
-      coins = 0;
-      localStorage.setItem('keywords', JSON.stringify(keywords));
-      localStorage.setItem('items', JSON.stringify(items));
-      localStorage.setItem('coins', coins);
+      // 初回スタート時のみリセット
+      if (!startTime) {
+        keywords = [];
+        items = [];
+        coins = 0;
+        localStorage.setItem('keywords', JSON.stringify(keywords));
+        localStorage.setItem('items', JSON.stringify(items));
+        localStorage.setItem('coins', coins);
 
-      startTime = Date.now();
-      localStorage.setItem('startTime', startTime);
+        startTime = Date.now();
+        localStorage.setItem('startTime', startTime);
+      }
 
       gameDiv.innerHTML = "<p>タイマーがスタートしました！迷路に挑戦！</p>";
       updateInventory();
@@ -134,9 +137,6 @@
       gameDiv.innerHTML = `<h2>ゴール！</h2><p>クリアタイム: ${minutes}分 ${seconds}秒</p>`;
       timerDiv.textContent = "";
       updateInventory();
-
-      // オプションでリセット
-      localStorage.removeItem('startTime');
     }
 
     // ルーティング
