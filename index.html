@@ -13,8 +13,8 @@
 </head>
 <body>
   <h1>学祭迷路ゲーム</h1>
+  <div id="timer"></div> <!-- 常に上部に表示 -->
   <div id="game"></div>
-  <div id="timer"></div>
   <div id="inventory"></div>
 
   <script>
@@ -23,7 +23,6 @@
     const timerDiv = document.getElementById("timer");
     const inventoryDiv = document.getElementById("inventory");
 
-    // localStorageから情報取得
     let keywords = JSON.parse(localStorage.getItem('keywords') || '[]');
     let items = JSON.parse(localStorage.getItem('items') || '[]');
     let coins = parseInt(localStorage.getItem('coins') || '0');
@@ -39,9 +38,9 @@
       inventoryDiv.innerHTML = html;
     }
 
-    function startTimer() {
-      // 初回スタート時のみリセット
-      if (!startTime) {
+    function startTimer(reset=false) {
+      if(reset || !startTime) {
+        // スタートQRで初期化
         keywords = [];
         items = [];
         coins = 0;
@@ -53,9 +52,8 @@
         localStorage.setItem('startTime', startTime);
       }
 
-      gameDiv.innerHTML = "<p>タイマーがスタートしました！迷路に挑戦！</p>";
-      updateInventory();
-
+      // タイマー開始
+      if(timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(() => {
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
         const minutes = Math.floor(elapsed / 60);
@@ -93,7 +91,6 @@
     function answer(correct) {
       if(correct){
         alert("正解！キーワードやアイテムを獲得しました🎉");
-
         const qNum = params.get("q");
         if(qNum === "1") keywords.push("祭の月");
         else if(qNum === "2") items.push("QRの知識");
@@ -139,8 +136,11 @@
       updateInventory();
     }
 
+    // ページロード時にタイマー継続
+    if(startTime) startTimer(false);
+
     // ルーティング
-    if(params.has("s")) startTimer();
+    if(params.has("s")) startTimer(true); // スタートQRでリセット
     else if(params.has("q")) showQuiz(params.get("q"));
     else if(params.has("coin")) collectCoin();
     else if(params.has("item")) collectItem(params.get("item"));
@@ -149,7 +149,6 @@
       gameDiv.innerHTML = "<p>スタートQRを読み取ってゲームを始めてください</p>";
       updateInventory();
     }
-
   </script>
 </body>
 </html>
