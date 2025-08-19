@@ -1,153 +1,168 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>学祭迷路ゲーム</title>
-<style>
-body { font-family: sans-serif; text-align: center; margin: 40px; }
-#timer {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  font-size: 18px;
-  background: rgba(255,255,255,0.8);
-  padding: 5px 10px;
-  border-radius: 5px;
-  z-index: 1000;
-}
-#game { margin-top: 60px; } /* タイマー分マージンを上げる */
-#inventory { margin-top: 20px; font-size: 16px; text-align: left; display: inline-block; }
-button { padding: 10px 20px; margin: 10px; font-size: 16px; }
-</style>
+  <meta charset="UTF-8">
+  <title>学祭迷路ゲーム</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin: 20px; }
+    #game { margin-top: 20px; position: relative; }
+    #timer { font-size: 18px; margin-top: 10px; position: fixed; top: 10px; right: 10px; background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 5px; z-index: 10; }
+    #inventory { margin-top: 20px; font-size: 16px; text-align: left; display: inline-block; }
+    button { padding: 10px 20px; margin: 10px; font-size: 16px; }
+    video#camera { width: 100%; max-width: 600px; border: 2px solid #333; border-radius: 10px; }
+    canvas#arEffect { position: absolute; top:0; left:0; pointer-events: none; }
+  </style>
 </head>
 <body>
-<h1>学祭迷路ゲーム</h1>
-<div id="timer"></div>
-<div id="game"></div>
-<div id="inventory"></div>
+  <h1>学祭迷路ゲーム</h1>
+  <div id="timer"></div>
+  <div id="game"></div>
+  <div id="inventory"></div>
 
-<script>
-const params = new URLSearchParams(window.location.search);
-const gameDiv = document.getElementById("game");
-const timerDiv = document.getElementById("timer");
-const inventoryDiv = document.getElementById("inventory");
+  <script>
+    const gameDiv = document.getElementById("game");
+    const timerDiv = document.getElementById("timer");
+    const inventoryDiv = document.getElementById("inventory");
 
-let keywords = JSON.parse(localStorage.getItem('keywords') || '[]');
-let items = JSON.parse(localStorage.getItem('items') || '[]');
-let coins = parseInt(localStorage.getItem('coins') || '0');
-let startTime = parseInt(localStorage.getItem('startTime') || '0');
-let timerInterval;
+    let keywords = JSON.parse(localStorage.getItem('keywords') || '[]');
+    let items = JSON.parse(localStorage.getItem('items') || '[]');
+    let coins = parseInt(localStorage.getItem('coins') || '0');
+    let startTime = parseInt(localStorage.getItem('startTime') || '0');
+    let timerInterval;
 
-// タイマー更新
-function startTimer(reset=false){
-  if(reset || !startTime){
-    keywords = [];
-    items = [];
-    coins = 0;
-    localStorage.setItem('keywords', JSON.stringify(keywords));
-    localStorage.setItem('items', JSON.stringify(items));
-    localStorage.setItem('coins', coins);
-    startTime = Date.now();
-    localStorage.setItem('startTime', startTime);
-  }
+    // タイマー更新関数
+    function startTimer() {
+      if(!startTime) startTime = Date.now();
+      localStorage.setItem('startTime', startTime);
 
-  if(timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(()=>{
-    const elapsed = Math.floor((Date.now() - startTime)/1000);
-    const minutes = Math.floor(elapsed/60);
-    const seconds = elapsed % 60;
-    timerDiv.textContent = `経過時間: ${minutes}分 ${seconds}秒`;
-  },1000);
-}
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        timerDiv.textContent = `経過時間: ${minutes}分 ${seconds}秒`;
+      }, 1000);
+    }
 
-// インベントリ更新
-function updateInventory(){
-  let html = "<h3>獲得アイテム・キーワード・コイン</h3><ul>";
-  keywords.forEach(k=> html+= `<li>キーワード: ${k}</li>`);
-  items.forEach(i=> html+= `<li>アイテム: ${i}</li>`);
-  html+= `<li>コイン: ${coins}</li></ul>`;
-  inventoryDiv.innerHTML = html;
-}
+    startTimer(); // ページ読み込みでタイマー開始
 
-// クイズ表示
-function showQuiz(num){
-  if(num==="1") gameDiv.innerHTML = `
-    <h2>クイズ1</h2>
-    <p>大学祭は何月に開催されることが多い？</p>
-    <button onclick="answer(true)">10月〜11月</button>
-    <button onclick="answer(false)">1月</button>`;
-  else if(num==="2") gameDiv.innerHTML = `
-    <h2>クイズ2</h2>
-    <p>QRコードを発明したのはどこの国？</p>
-    <button onclick="answer(true)">日本</button>
-    <button onclick="answer(false)">アメリカ</button>`;
-  else if(num==="3") gameDiv.innerHTML = `
-    <h2>クイズ3</h2>
-    <p>次のうちプログラミング言語はどれ？</p>
-    <button onclick="answer(true)">JavaScript</button>
-    <button onclick="answer(false)">Photoshop</button>`;
-  updateInventory();
-}
+    function updateInventory() {
+      let html = "<h3>獲得アイテム・キーワード・コイン</h3><ul>";
+      keywords.forEach(k => html += `<li>キーワード: ${k}</li>`);
+      items.forEach(i => html += `<li>アイテム: ${i}</li>`);
+      html += `<li>コイン: ${coins}</li></ul>`;
+      inventoryDiv.innerHTML = html;
+    }
 
-// クイズ解答
-function answer(correct){
-  if(correct){
-    alert("正解！キーワードやアイテムを獲得しました🎉");
-    const qNum = params.get("q");
-    if(qNum==="1") keywords.push("祭の月");
-    else if(qNum==="2") items.push("QRの知識");
-    else if(qNum==="3") keywords.push("プログラミング");
-    localStorage.setItem('keywords', JSON.stringify(keywords));
-    localStorage.setItem('items', JSON.stringify(items));
     updateInventory();
-    gameDiv.innerHTML = "<p>次のQRコードを探そう！</p>";
-  } else {
-    alert("不正解…もう一度挑戦してみてね。");
-  }
-}
 
-// コイン獲得
-function collectCoin(){
-  coins+=1;
-  localStorage.setItem('coins', coins);
-  updateInventory();
-  alert("コインを獲得しました🎉");
-}
+    // ホーム画面
+    function showHome() {
+      gameDiv.innerHTML = `
+        <p>スタートQRを読み取ってゲームを始めてください</p>
+        <button onclick="startCameraMode()">カメラモード</button>
+      `;
+    }
 
-// アイテム獲得
-function collectItem(itemName){
-  if(!items.includes(itemName)) items.push(itemName);
-  localStorage.setItem('items', JSON.stringify(items));
-  updateInventory();
-  alert(`アイテム「${itemName}」を獲得しました🎉`);
-}
+    // QRクイズ・アイテム・コイン管理
+    function showQuiz(num) {
+      if (num === "1") gameDiv.innerHTML = `
+        <h2>クイズ1</h2>
+        <p>大学祭は何月に開催されることが多い？</p>
+        <button onclick="answer(true,1)">10月〜11月</button>
+        <button onclick="answer(false,1)">1月</button>`;
+      else if (num === "2") gameDiv.innerHTML = `
+        <h2>クイズ2</h2>
+        <p>QRコードを発明したのはどこの国？</p>
+        <button onclick="answer(true,2)">日本</button>
+        <button onclick="answer(false,2)">アメリカ</button>`;
+      else if (num === "3") gameDiv.innerHTML = `
+        <h2>クイズ3</h2>
+        <p>次のうちプログラミング言語はどれ？</p>
+        <button onclick="answer(true,3)">JavaScript</button>
+        <button onclick="answer(false,3)">Photoshop</button>`;
+      updateInventory();
+    }
 
-// ゴール
-function showGoal(){
-  if(!keywords.includes("祭の月")){
-    gameDiv.innerHTML = "<p>まだ必要なキーワードを集めていません！</p>";
-    updateInventory();
-    return;
-  }
-  clearInterval(timerInterval);
-  const elapsed = Math.floor((Date.now() - startTime)/1000);
-  const minutes = Math.floor(elapsed/60);
-  const seconds = elapsed % 60;
-  gameDiv.innerHTML = `<h2>ゴール！</h2><p>クリアタイム: ${minutes}分 ${seconds}秒</p>`;
-  updateInventory();
-}
+    function answer(correct, qNum){
+      if(correct){
+        alert("正解！キーワードやアイテムを獲得しました🎉");
+        if(qNum===1) keywords.push("祭の月");
+        else if(qNum===2) items.push("QRの知識");
+        else if(qNum===3) keywords.push("プログラミング");
 
-// ルーティング
-if(params.has("s")) startTimer(true); // スタートQRでリセット
-else startTimer(false);                // その他ページは再開
+        localStorage.setItem('keywords', JSON.stringify(keywords));
+        localStorage.setItem('items', JSON.stringify(items));
+        updateInventory();
+        gameDiv.innerHTML = "<p>次のQRコードを探そう！</p>";
+      } else {
+        alert("不正解…もう一度挑戦してみてね。");
+      }
+    }
 
-if(params.has("q")) showQuiz(params.get("q"));
-else if(params.has("coin")) collectCoin();
-else if(params.has("item")) collectItem(params.get("item"));
-else if(params.has("goal")) showGoal();
-else if(!params.has("s")) gameDiv.innerHTML = "<p>スタートQRを読み取ってゲームを始めてください</p>";
+    function collectCoin(){
+      coins += 1;
+      localStorage.setItem('coins', coins);
+      updateInventory();
+      alert("コインを獲得しました🎉");
+    }
 
-updateInventory();
-</script>
+    function collectItem(itemName){
+      if(!items.includes(itemName)) items.push(itemName);
+      localStorage.setItem('items', JSON.stringify(items));
+      updateInventory();
+      alert(`アイテム「${itemName}」を獲得しました🎉`);
+    }
+
+    function showGoal(){
+      if(!keywords.includes("祭の月")){
+        gameDiv.innerHTML = "<p>まだ必要なキーワードを集めていません！</p>";
+        updateInventory();
+        return;
+      }
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const minutes = Math.floor(elapsed / 60);
+      const seconds = elapsed % 60;
+      gameDiv.innerHTML = `<h2>ゴール！</h2><p>クリアタイム: ${minutes}分 ${seconds}秒</p>`;
+      updateInventory();
+    }
+
+    // カメラモード
+    function startCameraMode(){
+      gameDiv.innerHTML = `
+        <video id="camera" autoplay playsinline></video>
+        <canvas id="arEffect"></canvas>
+        <p>カメラを使ってQRコードを読み取ろう！</p>
+        <button onclick="showHome()">ホームに戻る</button>
+      `;
+
+      const video = document.getElementById("camera");
+      const canvas = document.getElementById("arEffect");
+      const ctx = canvas.getContext("2d");
+
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(stream => {
+          video.srcObject = stream;
+          video.addEventListener("loadedmetadata", ()=>{
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+          });
+        })
+        .catch(err => alert("カメラ起動失敗: "+err));
+
+      // 簡易ARエフェクト（例: 点滅する円）
+      function drawEffect(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = `rgba(255,255,0,0.5)`;
+        ctx.beginPath();
+        ctx.arc(canvas.width/2,canvas.height/2,50+Math.sin(Date.now()/200)*20,0,Math.PI*2);
+        ctx.fill();
+        requestAnimationFrame(drawEffect);
+      }
+      drawEffect();
+    }
+
+    // ページロード時はホーム表示
+    showHome();
+  </script>
 </body>
 </html>
