@@ -2,21 +2,17 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>学祭迷路ゲーム AR版</title>
+  <title>学祭迷路ゲーム</title>
   <style>
-    body { font-family: sans-serif; text-align: center; margin: 0; overflow: hidden; }
-    #camera { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
-    #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-    #game { position: relative; z-index: 2; margin-top: 20px; color: white; text-shadow: 1px 1px 2px black; }
-    #timer { font-size: 18px; margin-top: 10px; position: relative; z-index: 2; color: white; text-shadow: 1px 1px 2px black; }
-    #inventory { margin-top: 20px; font-size: 16px; text-align: left; display: inline-block; position: relative; z-index: 2; color: white; text-shadow: 1px 1px 2px black; }
+    body { font-family: sans-serif; text-align: center; margin: 40px; }
+    #game { margin-top: 20px; }
+    #timer { font-size: 18px; margin-top: 10px; }
+    #inventory { margin-top: 20px; font-size: 16px; text-align: left; display: inline-block; }
     button { padding: 10px 20px; margin: 10px; font-size: 16px; }
   </style>
 </head>
 <body>
-  <video id="camera" autoplay playsinline></video>
-  <div id="overlay"></div>
-  <h1 id="title">学祭迷路ゲーム AR版</h1>
+  <h1>学祭迷路ゲーム</h1>
   <div id="game"></div>
   <div id="timer"></div>
   <div id="inventory"></div>
@@ -26,9 +22,7 @@
     const gameDiv = document.getElementById("game");
     const timerDiv = document.getElementById("timer");
     const inventoryDiv = document.getElementById("inventory");
-    const overlayDiv = document.getElementById("overlay");
 
-    // LocalStorage から読み込み
     let keywords = JSON.parse(localStorage.getItem('keywords') || '[]');
     let items = JSON.parse(localStorage.getItem('items') || '[]');
     let coins = parseInt(localStorage.getItem('coins') || '0');
@@ -96,6 +90,7 @@
     function answer(correct) {
       if(correct){
         alert("正解！キーワードやアイテムを獲得しました🎉");
+
         const qNum = params.get("q");
         if(qNum === "1") keywords.push("祭の月");
         else if(qNum === "2") items.push("QRの知識");
@@ -104,7 +99,6 @@
         localStorage.setItem('keywords', JSON.stringify(keywords));
         localStorage.setItem('items', JSON.stringify(items));
 
-        showEffect();
         updateInventory();
         gameDiv.innerHTML = "<p>次のQRコードを探そう！</p>";
       } else {
@@ -115,7 +109,6 @@
     function collectCoin() {
       coins += 1;
       localStorage.setItem('coins', coins);
-      showEffect();
       updateInventory();
       alert("コインを獲得しました🎉");
     }
@@ -123,7 +116,6 @@
     function collectItem(itemName) {
       if(!items.includes(itemName)) items.push(itemName);
       localStorage.setItem('items', JSON.stringify(items));
-      showEffect();
       updateInventory();
       alert(`アイテム「${itemName}」を獲得しました🎉`);
     }
@@ -143,34 +135,9 @@
       timerDiv.textContent = "";
       updateInventory();
 
+      // オプションでリセット
       localStorage.removeItem('startTime');
     }
-
-    // AR風エフェクト
-    function showEffect() {
-      const effect = document.createElement("div");
-      effect.textContent = "✨";
-      effect.style.position = "absolute";
-      effect.style.fontSize = "50px";
-      effect.style.left = Math.random() * 80 + "%";
-      effect.style.top = Math.random() * 80 + "%";
-      effect.style.opacity = 1;
-      effect.style.transition = "all 1s ease-out";
-
-      overlayDiv.appendChild(effect);
-
-      setTimeout(() => {
-        effect.style.top = (parseFloat(effect.style.top) - 20) + "%";
-        effect.style.opacity = 0;
-      }, 50);
-
-      setTimeout(() => overlayDiv.removeChild(effect), 1000);
-    }
-
-    // カメラ起動
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-      .then(stream => { document.getElementById("camera").srcObject = stream; })
-      .catch(err => console.error("カメラが使えません:", err));
 
     // ルーティング
     if(params.has("s")) startTimer();
