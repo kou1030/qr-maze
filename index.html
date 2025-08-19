@@ -2,10 +2,74 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>学祭迷路テスト</title>
+  <title>学祭迷路ゲーム</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin: 40px; }
+    #game { margin-top: 20px; }
+    button { padding: 10px 20px; margin: 10px; font-size: 16px; }
+  </style>
 </head>
 <body>
-  <h1>学祭迷路テストページ</h1>
-  <p>このページが表示されればGitHub Pagesは動作しています。</p>
+  <h1>学祭迷路ゲーム</h1>
+  <div id="game"></div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const gameDiv = document.getElementById("game");
+    let startTime;
+
+    function startTimer() {
+      startTime = Date.now();
+      gameDiv.innerHTML = "<p>タイマーがスタートしました！迷路に挑戦！</p>";
+    }
+
+    function showQuiz(num) {
+      if (num === "1") {
+        gameDiv.innerHTML = `
+          <h2>クイズ1</h2>
+          <p>大学祭は何月に開催されることが多い？</p>
+          <button onclick="answer(true)">10月〜11月</button>
+          <button onclick="answer(false)">1月</button>
+        `;
+      }
+      else if (num === "2") {
+        gameDiv.innerHTML = `
+          <h2>クイズ2</h2>
+          <p>QRコードを発明したのはどこの国？</p>
+          <button onclick="answer(true)">日本</button>
+          <button onclick="answer(false)">アメリカ</button>
+        `;
+      }
+      else if (num === "3") {
+        gameDiv.innerHTML = `
+          <h2>クイズ3</h2>
+          <p>次のうちプログラミング言語はどれ？</p>
+          <button onclick="answer(true)">JavaScript</button>
+          <button onclick="answer(false)">Photoshop</button>
+        `;
+      }
+    }
+
+    function answer(correct) {
+      if(correct){
+        alert("正解！キーワードを獲得しました🎉");
+        gameDiv.innerHTML = "<p>次のQRコードを探そう！</p>";
+      } else {
+        alert("不正解…もう一度挑戦してみてね。");
+      }
+    }
+
+    // ルーティング処理
+    if(params.has("s")){
+      startTimer();
+    }
+    else if(params.has("q")){
+      const qNum = params.get("q");
+      showQuiz(qNum);
+    }
+    else {
+      gameDiv.innerHTML = "<p>スタートQRを読み取ってゲームを始めてください</p>";
+    }
+  </script>
 </body>
 </html>
