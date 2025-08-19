@@ -1,155 +1,132 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>学祭迷路ゲーム</title>
-  <style>
-    body { font-family: sans-serif; text-align: center; margin: 40px; }
-    #game { margin-top: 20px; }
-    #timer { font-size: 18px; margin-top: 10px; }
-    #inventory { margin-top: 20px; font-size: 16px; text-align: left; display: inline-block; }
-    button { padding: 10px 20px; margin: 10px; font-size: 16px; }
-  </style>
+<meta charset="UTF-8">
+<title>学祭迷路ゲーム AR版</title>
+<style>
+  body { font-family: sans-serif; text-align: center; margin: 0; overflow: hidden; }
+  #game { position: relative; width: 100%; height: 100vh; background: #000; }
+  video { width: 100%; height: 100%; object-fit: cover; }
+  .overlay {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    transition: all 0.5s ease;
+  }
+  #inventory {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 16px;
+    background: rgba(255,255,255,0.8);
+    padding: 5px 10px;
+    border-radius: 8px;
+  }
+</style>
 </head>
 <body>
-  <h1>学祭迷路ゲーム</h1>
   <div id="game"></div>
-  <div id="timer"></div>
   <div id="inventory"></div>
 
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const gameDiv = document.getElementById("game");
-    const timerDiv = document.getElementById("timer");
-    const inventoryDiv = document.getElementById("inventory");
+<script>
+const params = new URLSearchParams(window.location.search);
+const gameDiv = document.getElementById("game");
+const inventoryDiv = document.getElementById("inventory");
 
-    let keywords = JSON.parse(localStorage.getItem('keywords') || '[]');
-    let items = JSON.parse(localStorage.getItem('items') || '[]');
-    let coins = parseInt(localStorage.getItem('coins') || '0');
-    let startTime = parseInt(localStorage.getItem('startTime') || '0');
-    let timerInterval;
+// ゲームデータ
+let keywords = JSON.parse(localStorage.getItem('keywords') || '[]');
+let items = JSON.parse(localStorage.getItem('items') || '[]');
+let coins = parseInt(localStorage.getItem('coins') || '0');
+let startTime = parseInt(localStorage.getItem('startTime') || '0');
 
-    function updateInventory() {
-      let html = "<h3>獲得アイテム・キーワード・コイン</h3><ul>";
-      keywords.forEach(k => html += `<li>キーワード: ${k}</li>`);
-      items.forEach(i => html += `<li>アイテム: ${i}</li>`);
-      html += `<li>コイン: ${coins}</li>`;
-      html += "</ul>";
-      inventoryDiv.innerHTML = html;
-    }
+// インベントリ更新
+function updateInventory() {
+  let html = "<h3>獲得アイテム・キーワード・コイン</h3><ul>";
+  keywords.forEach(k => html += `<li>キーワード: ${k}</li>`);
+  items.forEach(i => html += `<li>アイテム: ${i}</li>`);
+  html += `<li>コイン: ${coins}</li></ul>`;
+  inventoryDiv.innerHTML = html;
+}
 
-    function startTimer() {
-      // ゲーム開始時にリセット
-      keywords = [];
-      items = [];
-      coins = 0;
-      localStorage.setItem('keywords', JSON.stringify(keywords));
-      localStorage.setItem('items', JSON.stringify(items));
-      localStorage.setItem('coins', coins);
+// カメラ映像を表示
+function startCamera() {
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+    .then(stream => {
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.autoplay = true;
+      video.playsInline = true;
+      gameDiv.appendChild(video);
+    })
+    .catch(err => alert("カメラが使えません: " + err));
+}
 
-      startTime = Date.now();
-      localStorage.setItem('startTime', startTime);
+// AR風エフェクト表示
+function showOverlay(color = 'gold') {
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.style.width = '80px';
+  overlay.style.height = '80px';
+  overlay.style.background = color;
+  overlay.style.top = `${Math.random() * (window.innerHeight-100)}px`;
+  overlay.style.left = `${Math.random() * (window.innerWidth-100)}px`;
+  gameDiv.appendChild(overlay);
 
-      gameDiv.innerHTML = "<p>タイマーがスタートしました！迷路に挑戦！</p>";
-      updateInventory();
+  setTimeout(() => {
+    overlay.style.transform = 'scale(2)';
+    overlay.style.opacity = '0';
+  }, 50);
 
-      timerInterval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        const minutes = Math.floor(elapsed / 60);
-        const seconds = elapsed % 60;
-        timerDiv.textContent = `経過時間: ${minutes}分 ${seconds}秒`;
-      }, 1000);
-    }
+  setTimeout(() => overlay.remove(), 700);
+}
 
-    function showQuiz(num) {
-      if (num === "1") {
-        gameDiv.innerHTML = `
-          <h2>クイズ1</h2>
-          <p>大学祭は何月に開催されることが多い？</p>
-          <button onclick="answer(true)">10月〜11月</button>
-          <button onclick="answer(false)">1月</button>
-        `;
-      } else if (num === "2") {
-        gameDiv.innerHTML = `
-          <h2>クイズ2</h2>
-          <p>QRコードを発明したのはどこの国？</p>
-          <button onclick="answer(true)">日本</button>
-          <button onclick="answer(false)">アメリカ</button>
-        `;
-      } else if (num === "3") {
-        gameDiv.innerHTML = `
-          <h2>クイズ3</h2>
-          <p>次のうちプログラミング言語はどれ？</p>
-          <button onclick="answer(true)">JavaScript</button>
-          <button onclick="answer(false)">Photoshop</button>
-        `;
-      }
-      updateInventory();
-    }
+// コイン獲得
+function collectCoin() {
+  coins += 1;
+  localStorage.setItem('coins', coins);
+  updateInventory();
+  showOverlay('gold');
+  alert("コインを獲得しました🎉");
+}
 
-    function answer(correct) {
-      if(correct){
-        alert("正解！キーワードやアイテムを獲得しました🎉");
+// アイテム獲得
+function collectItem(name) {
+  if(!items.includes(name)) items.push(name);
+  localStorage.setItem('items', JSON.stringify(items));
+  updateInventory();
+  showOverlay('cyan');
+  alert(`アイテム「${name}」を獲得しました🎉`);
+}
 
-        const qNum = params.get("q");
-        if(qNum === "1") keywords.push("祭の月");
-        else if(qNum === "2") items.push("QRの知識");
-        else if(qNum === "3") keywords.push("プログラミング");
+// QRでゲーム開始
+function startGame() {
+  keywords = [];
+  items = [];
+  coins = 0;
+  localStorage.setItem('keywords', JSON.stringify(keywords));
+  localStorage.setItem('items', JSON.stringify(items));
+  localStorage.setItem('coins', coins);
 
-        localStorage.setItem('keywords', JSON.stringify(keywords));
-        localStorage.setItem('items', JSON.stringify(items));
+  startTime = Date.now();
+  localStorage.setItem('startTime', startTime);
+  updateInventory();
+  startCamera();
+}
 
-        updateInventory();
-        gameDiv.innerHTML = "<p>次のQRコードを探そう！</p>";
-      } else {
-        alert("不正解…もう一度挑戦してみてね。");
-      }
-    }
+// QRでゴール
+function showGoal() {
+  const elapsed = Math.floor((Date.now() - startTime)/1000);
+  const minutes = Math.floor(elapsed/60);
+  const seconds = elapsed%60;
+  alert(`ゴール！クリアタイム: ${minutes}分 ${seconds}秒`);
+}
 
-    function collectCoin() {
-      coins += 1;
-      localStorage.setItem('coins', coins);
-      updateInventory();
-      alert("コインを獲得しました🎉");
-    }
-
-    function collectItem(itemName) {
-      if(!items.includes(itemName)) items.push(itemName);
-      localStorage.setItem('items', JSON.stringify(items));
-      updateInventory();
-      alert(`アイテム「${itemName}」を獲得しました🎉`);
-    }
-
-    function showGoal() {
-      if(!keywords.includes("祭の月")){
-        gameDiv.innerHTML = "<p>まだ必要なキーワードを集めていません！</p>";
-        updateInventory();
-        return;
-      }
-
-      clearInterval(timerInterval);
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      const minutes = Math.floor(elapsed / 60);
-      const seconds = elapsed % 60;
-      gameDiv.innerHTML = `<h2>ゴール！</h2><p>クリアタイム: ${minutes}分 ${seconds}秒</p>`;
-      timerDiv.textContent = "";
-      updateInventory();
-
-      // オプションでリセット
-      localStorage.removeItem('startTime');
-    }
-
-    // ルーティング
-    if(params.has("s")) startTimer();
-    else if(params.has("q")) showQuiz(params.get("q"));
-    else if(params.has("coin")) collectCoin();
-    else if(params.has("item")) collectItem(params.get("item"));
-    else if(params.has("goal")) showGoal();
-    else {
-      gameDiv.innerHTML = "<p>スタートQRを読み取ってゲームを始めてください</p>";
-      updateInventory();
-    }
-
-  </script>
+// ルーティング
+if(params.has('s')) startGame();
+else if(params.has('coin')) collectCoin();
+else if(params.has('item')) collectItem(params.get('item'));
+else if(params.has('goal')) showGoal();
+else updateInventory();
+</script>
 </body>
 </html>
