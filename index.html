@@ -1,75 +1,117 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>学祭迷路ゲーム</title>
-  <style>
-    body { font-family: sans-serif; text-align: center; margin: 40px; }
-    #game { margin-top: 20px; }
-    button { padding: 10px 20px; margin: 10px; font-size: 16px; }
-  </style>
+<meta charset="UTF-8">
+<title>迷路QRゲームサンプル</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+<style>
+  body { margin:0; overflow:hidden; font-family:sans-serif; }
+  #info { position:absolute; top:10px; left:10px; background:rgba(255,255,255,0.8); padding:10px; z-index:10; }
+  button { font-size:16px; padding:5px 10px; margin-top:10px; }
+</style>
 </head>
 <body>
-  <h1>学祭迷路ゲーム</h1>
-  <div id="game"></div>
+<div id="info">迷路QRゲームサンプル</div>
 
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const gameDiv = document.getElementById("game");
-    let startTime;
+<script>
+const params = new URLSearchParams(window.location.search);
 
-    function startTimer() {
-      startTime = Date.now();
-      gameDiv.innerHTML = "<p>タイマーがスタートしました！迷路に挑戦！</p>";
-    }
+let capture;
+let keywordCollected = false;
 
-    function showQuiz(num) {
-      if (num === "1") {
-        gameDiv.innerHTML = `
-          <h2>クイズ1</h2>
-          <p>大学祭は何月に開催されることが多い？</p>
-          <button onclick="answer(true)">10月〜11月</button>
-          <button onclick="answer(false)">1月</button>
-        `;
-      }
-      else if (num === "2") {
-        gameDiv.innerHTML = `
-          <h2>クイズ2</h2>
-          <p>QRコードを発明したのはどこの国？</p>
-          <button onclick="answer(true)">日本</button>
-          <button onclick="answer(false)">アメリカ</button>
-        `;
-      }
-      else if (num === "3") {
-        gameDiv.innerHTML = `
-          <h2>クイズ3</h2>
-          <p>次のうちプログラミング言語はどれ？</p>
-          <button onclick="answer(true)">JavaScript</button>
-          <button onclick="answer(false)">Photoshop</button>
-        `;
-      }
-    }
+// ARマーク画像
+let markImgs = [];
+function preload() {
+  markImgs[1] = loadImage('https://i.imgur.com/3X5v7Zy.png'); // AR1
+  markImgs[2] = loadImage('https://i.imgur.com/I1pQk3G.png'); // AR2
+  markImgs[3] = loadImage('https://i.imgur.com/0kXNx5K.png'); // AR3
+}
 
-    function answer(correct) {
-      if(correct){
-        alert("正解！キーワードを獲得しました🎉");
-        gameDiv.innerHTML = "<p>次のQRコードを探そう！</p>";
-      } else {
-        alert("不正解…もう一度挑戦してみてね。");
-      }
-    }
+function setup() {
+  createCanvas(windowWidth, windowHeight);
 
-    // ルーティング処理
-    if(params.has("s")){
-      startTimer();
+  // ARページの場合はカメラ起動
+  if(params.get("ar")) {
+    capture = createCapture(VIDEO);
+    capture.size(windowWidth, windowHeight);
+    capture.hide();
+  }
+}
+
+function draw() {
+  background(255);
+
+  // スタートページ
+  if(params.get("s")) {
+    fill(0);
+    textSize(30);
+    textAlign(CENTER);
+    text("タイマースタート！", width/2, height/2);
+  }
+
+  // クイズページ
+  else if(params.get("q")) {
+    let quizNum = params.get("q");
+    fill(0);
+    textSize(25);
+    textAlign(CENTER);
+    text(`クイズ${quizNum}`, width/2, height/2-30);
+    text("正解ボタンを押してキーワード獲得", width/2, height/2+10);
+
+    // 正解ボタン
+    if(!keywordCollected){
+      fill(0,200,0);
+      rect(width/2-60, height/2+40, 120, 40, 10);
+      fill(255);
+      textSize(18);
+      text("正解", width/2, height/2+65);
+    } else {
+      fill(0);
+      textSize(20);
+      text("キーワードを獲得しました🎉", width/2, height/2+65);
     }
-    else if(params.has("q")){
-      const qNum = params.get("q");
-      showQuiz(qNum);
+  }
+
+  // ARページ
+  else if(params.get("ar")) {
+    let arNum = params.get("ar");
+    image(capture, 0, 0, width, height);
+    image(markImgs[arNum], width*0.6, height*0.6, 150, 150);
+
+    fill(255, 255, 255, 200);
+    textSize(20);
+    textAlign(CENTER);
+    if(!keywordCollected){
+      text("マークをタップしてキーワード獲得！", width/2, height*0.5);
+    } else {
+      text("キーワードを獲得しました🎉", width/2, height*0.5);
     }
-    else {
-      gameDiv.innerHTML = "<p>スタートQRを読み取ってゲームを始めてください</p>";
-    }
-  </script>
+  }
+
+  // それ以外
+  else {
+    fill(0);
+    textSize(25);
+    textAlign(CENTER);
+    text("QRコードを読み込んでください", width/2, height/2);
+  }
+}
+
+// マウスクリックでキーワード獲得
+function mousePressed() {
+  if(params.get("q") && !keywordCollected){
+    let qNum = params.get("q");
+    localStorage.setItem(`keyword_q${qNum}`, "獲得済");
+    keywordCollected = true;
+    alert(`クイズ${qNum}のキーワードを獲得しました🎉`);
+  } 
+  else if(params.get("ar") && !keywordCollected){
+    let arNum = params.get("ar");
+    localStorage.setItem(`keyword_ar${arNum}`, "獲得済");
+    keywordCollected = true;
+    alert(`AR${arNum}のキーワードを獲得しました🎉`);
+  }
+}
+</script>
 </body>
 </html>
