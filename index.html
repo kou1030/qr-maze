@@ -22,10 +22,10 @@
   <div id="timer"></div>
   <div>
     <button onclick="startCamera()">カメラモード</button>
-    <button onclick="resetGame()">ゲームリセット</button>
+    <button onclick="startGame()">ゲームスタート</button>
   </div>
   <div id="game">
-    <p>スタート地点のQRコードを読み込んでゲームを開始してください！</p>
+    <p>「ゲームスタート」ボタンを押して開始してください！</p>
   </div>
   <div id="cameraMode" style="display:none;"></div>
   <div id="inventory"></div>
@@ -93,9 +93,14 @@
 
       lastQR = "";
 
-      gameDiv.innerHTML = "<p>ゲームがリセットされました！新しいゲームを開始できます。</p>";
+      gameDiv.innerHTML = "<p>ゲームがスタートしました！最初のQRコードを探してください。</p>";
       cameraDiv.style.display = "none";
       gameDiv.style.display = "block";
+    }
+
+    function startGame() {
+      resetGame();
+      alert("ゲームスタート！新しいゲームを開始しました。");
     }
 
     function collectCoin() {
@@ -196,11 +201,8 @@
 
       const params = new URLSearchParams((data.split("?")[1]) || "");
 
-      if(params.has("start")) { 
-        resetGame(); 
-        alert("スタート地点！新しいゲームを開始しました。"); 
-        return; 
-      }
+      // 🚫 スタートQRは無効化しました（何もしない）
+
       if(params.has("coin")) collectCoin();
       if(params.has("item")) collectItem(params.get("item"));
       if(params.has("q")) showQuiz(params.get("q"));
