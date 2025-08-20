@@ -10,7 +10,21 @@
     #inventory { margin-top: 20px; font-size: 16px; text-align: left; display: inline-block; }
     button { padding: 10px 20px; margin: 10px; font-size: 16px; }
     #cameraMode video { width: 100%; max-width: 400px; border: 1px solid #333; }
-    .arCoin { position: absolute; width: 80px; height: 80px; animation: pop 0.8s ease-out; }
+
+    /* コインジャンプアニメーション（回転なし） */
+    .arCoin {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      animation: coinJump 1s ease-out forwards;
+    }
+    @keyframes coinJump {
+      0% { transform: translateY(0) scale(0); opacity: 1; }
+      50% { transform: translateY(-80px) scale(1.2); opacity: 1; }
+      100% { transform: translateY(0) scale(1); opacity: 0; }
+    }
+
+    .arEffect { position: absolute; width: 80px; height: 80px; animation: pop 0.8s ease-out; }
     @keyframes pop {
       0% { transform: scale(0); opacity:1; }
       100% { transform: scale(1.5); opacity:0; }
@@ -21,11 +35,11 @@
   <h1>学祭迷路ゲーム AR対応版</h1>
   <div id="timer"></div>
   <div>
-    <button id="startGameBtn">ゲームスタート</button>
+    <button onclick="startGame()">ゲームスタート</button>
     <button onclick="startCamera()">カメラモード</button>
   </div>
   <div id="game">
-    <p>ゲームスタートボタンを押して開始してください！</p>
+    <p>ゲームスタートボタンを押して始めてください！</p>
   </div>
   <div id="cameraMode" style="display:none;"></div>
   <div id="inventory"></div>
@@ -43,14 +57,6 @@
     const gameDiv = document.getElementById("game");
     const cameraDiv = document.getElementById("cameraMode");
     const inventoryDiv = document.getElementById("inventory");
-    const startBtn = document.getElementById("startGameBtn");
-
-    startBtn.onclick = () => {
-      startTime = Date.now();
-      startTimer();
-      updateInventory();
-      gameDiv.innerHTML = "<p>ゲームが開始されました！カメラモードでQRを探そう！</p>";
-    };
 
     function updateInventory() {
       let html = "<h3>獲得アイテム・キーワード・コイン</h3><ul>";
@@ -73,6 +79,18 @@
       timerInterval = setInterval(updateTimer, 1000);
     }
 
+    function startGame(){
+      // 初期化
+      keywords = [];
+      items = [];
+      coins = 0;
+      startTime = Date.now();
+      updateInventory();
+      updateTimer();
+      startTimer();
+      gameDiv.innerHTML = "<p>ゲームスタート！カメラモードでQRを探してアイテムやコインをゲットしよう！</p>";
+    }
+
     function collectCoin(x, y) {
       coins += 1;
       updateInventory();
@@ -83,10 +101,8 @@
       const img = document.createElement("img");
       img.src = imgSrc;
       img.className = "arCoin";
-      const imgWidth = 80;
-      const imgHeight = 80;
-      img.style.left = (x - imgWidth/2) + "px";
-      img.style.top  = (y - imgHeight/2) + "px";
+      img.style.top = (y - 40) + "px";   // 中心調整
+      img.style.left = (x - 40) + "px";  // 中心調整
       cameraDiv.appendChild(img);
       setTimeout(()=>{ cameraDiv.removeChild(img); }, 1000);
     }
@@ -139,16 +155,15 @@
 
       const params = new URLSearchParams((data.split("?")[1]) || "");
       if(params.has("coin") && location){ 
-        const x = (location.topLeftCorner.x + location.topRightCorner.x +
-                   location.bottomLeftCorner.x + location.bottomRightCorner.x) / 4;
-        const y = (location.topLeftCorner.y + location.topRightCorner.y +
-                   location.bottomLeftCorner.y + location.bottomRightCorner.y) / 4;
+        const x = (location.topLeftCorner.x + location.topRightCorner.x + location.bottomLeftCorner.x + location.bottomRightCorner.x)/4;
+        const y = (location.topLeftCorner.y + location.topRightCorner.y + location.bottomLeftCorner.y + location.bottomRightCorner.y)/4;
         collectCoin(x, y);
       }
     }
 
     window.addEventListener('load', () => {
       updateInventory();
+      if(startTime) startTimer();
     });
   </script>
 </body>
