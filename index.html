@@ -10,18 +10,26 @@
     #inventory { margin-top: 20px; font-size: 16px; text-align: left; display: inline-block; }
     button { padding: 10px 20px; margin: 10px; font-size: 16px; }
     #cameraMode video { width: 100%; max-width: 400px; border: 1px solid #333; }
-    
-    /* ARコインアニメーション */
+
+    /* コインARアニメーション（上下回転） */
     .arCoin {
       position: absolute;
       width: 80px;
       height: 80px;
-      animation: coinJumpRotate 1s ease-out forwards;
+      animation: coinJumpRotateX 1s ease-out forwards;
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
     }
-    @keyframes coinJumpRotate {
-      0% { transform: translateY(0) scale(0); opacity: 1; }
-      50% { transform: translateY(-80px) scale(1.2) rotate(180deg); opacity: 1; }
-      100% { transform: translateY(0) scale(1) rotate(360deg); opacity: 0; }
+    @keyframes coinJumpRotateX {
+      0% { transform: translateY(0) scale(0) rotateX(0deg); opacity: 1; }
+      50% { transform: translateY(-80px) scale(1.2) rotateX(180deg); opacity: 1; }
+      100% { transform: translateY(0) scale(1) rotateX(360deg); opacity: 0; }
+    }
+
+    .arEffect { position: absolute; width: 80px; height: 80px; animation: pop 0.8s ease-out; }
+    @keyframes pop {
+      0% { transform: scale(0); opacity:1; }
+      100% { transform: scale(1.5); opacity:0; }
     }
   </style>
 </head>
@@ -33,17 +41,17 @@
     <button onclick="startCamera()">カメラモード</button>
   </div>
   <div id="game">
-    <p>スタートボタンを押してゲームを開始してください！</p>
+    <p>ゲームスタートボタンを押して始めてください！</p>
   </div>
   <div id="cameraMode" style="display:none;"></div>
   <div id="inventory"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
   <script>
-    let keywords = JSON.parse(localStorage.getItem('keywords') || '[]');
-    let items = JSON.parse(localStorage.getItem('items') || '[]');
-    let coins = parseInt(localStorage.getItem('coins') || '0');
-    let startTime = parseInt(localStorage.getItem('startTime') || '0');
+    let keywords = [];
+    let items = [];
+    let coins = 0;
+    let startTime = 0;
     let timerInterval;
     let lastQR = "";
 
@@ -73,55 +81,30 @@
       timerInterval = setInterval(updateTimer, 1000);
     }
 
-    function startGame() {
-      clearInterval(timerInterval);
-
-      // データ初期化
+    function startGame(){
+      // 初期化
       keywords = [];
       items = [];
       coins = 0;
       startTime = Date.now();
-
-      // localStorage保存
-      localStorage.setItem('keywords', JSON.stringify(keywords));
-      localStorage.setItem('items', JSON.stringify(items));
-      localStorage.setItem('coins', coins.toString());
-      localStorage.setItem('startTime', startTime.toString());
-
       updateInventory();
       updateTimer();
       startTimer();
-      lastQR = "";
-
-      gameDiv.innerHTML = "<p>ゲームスタート！QRを探してアイテムやコインをゲット！</p>";
-      cameraDiv.style.display = "none";
-      gameDiv.style.display = "block";
+      gameDiv.innerHTML = "<p>ゲームスタート！カメラモードでQRを探してアイテムやコインをゲットしよう！</p>";
     }
 
-    function collectCoin() {
+    function collectCoin(x, y) {
       coins += 1;
-      localStorage.setItem('coins', coins.toString());
       updateInventory();
-      showCoinEffect("coin.png"); // コイン画像をアニメーション表示
+      showCoinEffect("coin.png", x, y);
     }
 
-    function collectItem(itemName) {
-      if(!items.includes(itemName)) {
-        items.push(itemName);
-        localStorage.setItem('items', JSON.stringify(items));
-        updateInventory();
-        alert(`アイテム「${itemName}」を獲得！`);
-      } else {
-        alert("このアイテムはすでに持っています！");
-      }
-    }
-
-    function showCoinEffect(imgSrc){
+    function showCoinEffect(imgSrc, x, y){
       const img = document.createElement("img");
       img.src = imgSrc;
       img.className = "arCoin";
-      img.style.top = Math.random()*200 + "px";
-      img.style.left = Math.random()*200 + "px";
+      img.style.top = (y - 40) + "px";   // 中心調整
+      img.style.left = (x - 40) + "px";  // 中心調整
       cameraDiv.appendChild(img);
       setTimeout(()=>{ cameraDiv.removeChild(img); }, 1000);
     }
@@ -160,25 +143,23 @@
           canvas.height = video.videoHeight;
           ctx.drawImage(video,0,0,canvas.width,canvas.height);
           const code = jsQR(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height);
-          if(code){ handleQR(code.data); }
+          if(code){ handleQR(code.data, code.location); }
         }
         requestAnimationFrame(scanQR);
       }
       scanQR();
     }
 
-    function handleQR(data){
+    function handleQR(data, location){
       if(data === lastQR) return;
       lastQR = data;
       setTimeout(()=>{ lastQR=""; }, 2000);
 
       const params = new URLSearchParams((data.split("?")[1]) || "");
-      if(params.has("coin")) collectCoin();
-      if(params.has("item")) collectItem(params.get("item"));
-      // スタートQRは無効
-      if(params.has("goal")) {
-        clearInterval(timerInterval);
-        alert("ゴール到達！" + timerDiv.textContent);
+      if(params.has("coin") && location){ 
+        const x = (location.topLeftCorner.x + location.topRightCorner.x + location.bottomLeftCorner.x + location.bottomRightCorner.x)/4;
+        const y = (location.topLeftCorner.y + location.topRightCorner.y + location.bottomLeftCorner.y + location.bottomRightCorner.y)/4;
+        collectCoin(x, y);
       }
     }
 
