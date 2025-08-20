@@ -11,7 +11,7 @@
     button { padding: 10px 20px; margin: 10px; font-size: 16px; }
     #cameraMode video { width: 100%; max-width: 400px; border: 1px solid #333; }
 
-    /* コインジャンプアニメーション（回転なし） */
+    /* コインジャンプアニメーション */
     .arCoin {
       position: absolute;
       width: 80px;
@@ -22,6 +22,19 @@
       0% { transform: translateY(0) scale(0); opacity: 1; }
       50% { transform: translateY(-80px) scale(1.2); opacity: 1; }
       100% { transform: translateY(0) scale(1); opacity: 0; }
+    }
+
+    /* 矢印アニメーション */
+    .arArrow {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      animation: arrowPop 1s ease-out forwards;
+    }
+    @keyframes arrowPop {
+      0% { transform: scale(0); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
     }
   </style>
 </head>
@@ -98,6 +111,16 @@
       img.style.left = (x - 40) + "px";
       cameraDiv.appendChild(img);
       setTimeout(()=>{ cameraDiv.removeChild(img); }, 1000);
+    }
+
+    function showArrowEffect(imgSrc, x, y){
+      const img = document.createElement("img");
+      img.src = imgSrc;
+      img.className = "arArrow";
+      img.style.top = (y - 40) + "px";
+      img.style.left = (x - 40) + "px";
+      cameraDiv.appendChild(img);
+      setTimeout(()=>{ cameraDiv.removeChild(img); }, 3000);
     }
 
     function showQuiz(num){
@@ -194,6 +217,11 @@
       }
       if(params.has("q")){
         showQuiz(params.get("q"));
+      }
+      if(params.has("arrow") && location){
+        const x = (location.topLeftCorner.x + location.topRightCorner.x + location.bottomLeftCorner.x + location.bottomRightCorner.x)/4;
+        const y = (location.topLeftCorner.y + location.topRightCorner.y + location.bottomLeftCorner.y + location.bottomRightCorner.y)/4;
+        showArrowEffect("arrow.png", x, y);
       }
     }
 
