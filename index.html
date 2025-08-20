@@ -23,12 +23,6 @@
       50% { transform: translateY(-80px) scale(1.2); opacity: 1; }
       100% { transform: translateY(0) scale(1); opacity: 0; }
     }
-
-    .arEffect { position: absolute; width: 80px; height: 80px; animation: pop 0.8s ease-out; }
-    @keyframes pop {
-      0% { transform: scale(0); opacity:1; }
-      100% { transform: scale(1.5); opacity:0; }
-    }
   </style>
 </head>
 <body>
@@ -80,7 +74,6 @@
     }
 
     function startGame(){
-      // 初期化
       keywords = [];
       items = [];
       coins = 0;
@@ -101,10 +94,50 @@
       const img = document.createElement("img");
       img.src = imgSrc;
       img.className = "arCoin";
-      img.style.top = (y - 40) + "px";   // 中心調整
-      img.style.left = (x - 40 + 150) + "px";  // 中心調整
+      img.style.top = (y - 40) + "px";
+      img.style.left = (x - 40) + "px";
       cameraDiv.appendChild(img);
       setTimeout(()=>{ cameraDiv.removeChild(img); }, 1000);
+    }
+
+    function showQuiz(num){
+      let html = "";
+      if(num === "1"){
+        html = `<h2>クイズ1</h2>
+        <p>大学祭は何月？</p>
+        <button onclick="answer(true,1)">10月〜11月</button>
+        <button onclick="answer(false,1)">1月</button>`;
+      }
+      if(num === "2"){
+        html = `<h2>クイズ2</h2>
+        <p>QRコード発明国は？</p>
+        <button onclick="answer(true,2)">日本</button>
+        <button onclick="answer(false,2)">アメリカ</button>`;
+      }
+      if(num === "3"){
+        html = `<h2>クイズ3</h2>
+        <p>プログラミング言語は？</p>
+        <button onclick="answer(true,3)">JavaScript</button>
+        <button onclick="answer(false,3)">Photoshop</button>`;
+      }
+      gameDiv.innerHTML = html;
+      cameraDiv.style.display = "none";
+      gameDiv.style.display = "block";
+    }
+
+    function answer(correct, qNum){
+      if(correct){
+        alert("正解！アイテムやキーワードを獲得🎉");
+        if(qNum===1 && !keywords.includes("祭の月")) keywords.push("祭の月");
+        if(qNum===2 && !items.includes("QRの知識")) items.push("QRの知識");
+        if(qNum===3 && !keywords.includes("プログラミング")) keywords.push("プログラミング");
+        updateInventory();
+      } else {
+        alert("不正解…");
+      }
+      gameDiv.innerHTML = "<p>次のQRコードを探そう！</p>";
+      cameraDiv.style.display = "block";
+      gameDiv.style.display = "none";
     }
 
     function startCamera(){
@@ -158,6 +191,9 @@
         const x = (location.topLeftCorner.x + location.topRightCorner.x + location.bottomLeftCorner.x + location.bottomRightCorner.x)/4;
         const y = (location.topLeftCorner.y + location.topRightCorner.y + location.bottomLeftCorner.y + location.bottomRightCorner.y)/4;
         collectCoin(x, y);
+      }
+      if(params.has("q")){
+        showQuiz(params.get("q"));
       }
     }
 
