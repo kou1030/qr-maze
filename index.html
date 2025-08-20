@@ -11,19 +11,17 @@
     button { padding: 10px 20px; margin: 10px; font-size: 16px; }
     #cameraMode video { width: 100%; max-width: 400px; border: 1px solid #333; }
 
-    /* コインARアニメーション（上下回転） */
+    /* コインジャンプアニメーション（回転なし） */
     .arCoin {
       position: absolute;
       width: 80px;
       height: 80px;
-      animation: coinJumpRotateX 1s ease-out forwards;
-      transform-style: preserve-3d;
-      backface-visibility: hidden;
+      animation: coinJump 1s ease-out forwards;
     }
-    @keyframes coinJumpRotateX {
-      0% { transform: translateY(0) scale(0) rotateX(0deg); opacity: 1; }
-      50% { transform: translateY(-80px) scale(1.2) rotateX(180deg); opacity: 1; }
-      100% { transform: translateY(0) scale(1) rotateX(360deg); opacity: 0; }
+    @keyframes coinJump {
+      0% { transform: translateY(0) scale(0); opacity: 1; }
+      50% { transform: translateY(-80px) scale(1.2); opacity: 1; }
+      100% { transform: translateY(0) scale(1); opacity: 0; }
     }
 
     .arEffect { position: absolute; width: 80px; height: 80px; animation: pop 0.8s ease-out; }
