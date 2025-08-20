@@ -10,10 +10,18 @@
     #inventory { margin-top: 20px; font-size: 16px; text-align: left; display: inline-block; }
     button { padding: 10px 20px; margin: 10px; font-size: 16px; }
     #cameraMode video { width: 100%; max-width: 400px; border: 1px solid #333; }
-    .arEffect { position: absolute; width: 80px; height: 80px; animation: pop 0.8s ease-out; }
-    @keyframes pop {
-      0% { transform: scale(0); opacity:1; }
-      100% { transform: scale(1.5); opacity:0; }
+    
+    /* ARコインアニメーション */
+    .arCoin {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      animation: coinJumpRotate 1s ease-out forwards;
+    }
+    @keyframes coinJumpRotate {
+      0% { transform: translateY(0) scale(0); opacity: 1; }
+      50% { transform: translateY(-80px) scale(1.2) rotate(180deg); opacity: 1; }
+      100% { transform: translateY(0) scale(1) rotate(360deg); opacity: 0; }
     }
   </style>
 </head>
@@ -21,11 +29,11 @@
   <h1>学祭迷路ゲーム AR対応版</h1>
   <div id="timer"></div>
   <div>
-    <button onclick="startCamera()">カメラモード</button>
     <button onclick="startGame()">ゲームスタート</button>
+    <button onclick="startCamera()">カメラモード</button>
   </div>
   <div id="game">
-    <p>「ゲームスタート」ボタンを押して開始してください！</p>
+    <p>スタートボタンを押してゲームを開始してください！</p>
   </div>
   <div id="cameraMode" style="display:none;"></div>
   <div id="inventory"></div>
@@ -65,49 +73,36 @@
       timerInterval = setInterval(updateTimer, 1000);
     }
 
-    function resetGame() {
+    function startGame() {
       clearInterval(timerInterval);
 
-      // localStorage削除
-      localStorage.removeItem('keywords');
-      localStorage.removeItem('items');
-      localStorage.removeItem('coins');
-      localStorage.removeItem('startTime');
-
-      // グローバル変数初期化
+      // データ初期化
       keywords = [];
       items = [];
       coins = 0;
       startTime = Date.now();
 
-      // 保存
+      // localStorage保存
       localStorage.setItem('keywords', JSON.stringify(keywords));
       localStorage.setItem('items', JSON.stringify(items));
       localStorage.setItem('coins', coins.toString());
       localStorage.setItem('startTime', startTime.toString());
 
-      // 表示更新
       updateInventory();
       updateTimer();
       startTimer();
-
       lastQR = "";
 
-      gameDiv.innerHTML = "<p>ゲームがスタートしました！最初のQRコードを探してください。</p>";
+      gameDiv.innerHTML = "<p>ゲームスタート！QRを探してアイテムやコインをゲット！</p>";
       cameraDiv.style.display = "none";
       gameDiv.style.display = "block";
-    }
-
-    function startGame() {
-      resetGame();
-      alert("ゲームスタート！新しいゲームを開始しました。");
     }
 
     function collectCoin() {
       coins += 1;
       localStorage.setItem('coins', coins.toString());
       updateInventory();
-      showAREffect("coin.png");
+      showCoinEffect("coin.png"); // コイン画像をアニメーション表示
     }
 
     function collectItem(itemName) {
@@ -115,42 +110,20 @@
         items.push(itemName);
         localStorage.setItem('items', JSON.stringify(items));
         updateInventory();
-        showAREffect("item.png");
+        alert(`アイテム「${itemName}」を獲得！`);
       } else {
         alert("このアイテムはすでに持っています！");
       }
     }
 
-    function showQuiz(num) {
-      let html = "";
-      if(num === "1") html = `<h2>クイズ1</h2><p>大学祭は何月？</p><button onclick="answer(true,1)">10月〜11月</button><button onclick="answer(false,1)">1月</button>`;
-      if(num === "2") html = `<h2>クイズ2</h2><p>QRコード発明国は？</p><button onclick="answer(true,2)">日本</button><button onclick="answer(false,2)">アメリカ</button>`;
-      if(num === "3") html = `<h2>クイズ3</h2><p>プログラミング言語は？</p><button onclick="answer(true,3)">JavaScript</button><button onclick="answer(false,3)">Photoshop</button>`;
-      gameDiv.innerHTML = html;
-    }
-
-    function answer(correct, qNum){
-      if(correct){
-        alert("正解！アイテムやキーワードを獲得🎉");
-        if(qNum===1 && !keywords.includes("祭の月")) keywords.push("祭の月");
-        if(qNum===2 && !items.includes("QRの知識")) items.push("QRの知識");
-        if(qNum===3 && !keywords.includes("プログラミング")) keywords.push("プログラミング");
-
-        localStorage.setItem('keywords', JSON.stringify(keywords));
-        localStorage.setItem('items', JSON.stringify(items));
-        updateInventory();
-        gameDiv.innerHTML = "<p>次のQRコードを探そう！</p>";
-      } else { alert("不正解…"); }
-    }
-
-    function showAREffect(imgSrc){
+    function showCoinEffect(imgSrc){
       const img = document.createElement("img");
       img.src = imgSrc;
-      img.className = "arEffect";
-      img.style.top = Math.random()*200+"px";
-      img.style.left = Math.random()*200+"px";
+      img.className = "arCoin";
+      img.style.top = Math.random()*200 + "px";
+      img.style.left = Math.random()*200 + "px";
       cameraDiv.appendChild(img);
-      setTimeout(()=>{ cameraDiv.removeChild(img); },800);
+      setTimeout(()=>{ cameraDiv.removeChild(img); }, 1000);
     }
 
     function startCamera(){
@@ -200,15 +173,12 @@
       setTimeout(()=>{ lastQR=""; }, 2000);
 
       const params = new URLSearchParams((data.split("?")[1]) || "");
-
-      // 🚫 スタートQRは無効化しました（何もしない）
-
       if(params.has("coin")) collectCoin();
       if(params.has("item")) collectItem(params.get("item"));
-      if(params.has("q")) showQuiz(params.get("q"));
-      if(params.has("goal")) { 
-        clearInterval(timerInterval); 
-        alert("ゴール到達！" + timerDiv.textContent); 
+      // スタートQRは無効
+      if(params.has("goal")) {
+        clearInterval(timerInterval);
+        alert("ゴール到達！" + timerDiv.textContent);
       }
     }
 
