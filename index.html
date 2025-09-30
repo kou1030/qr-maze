@@ -55,7 +55,7 @@
   <h1>学祭迷路ゲーム AR対応版</h1>
   <div id="timer"></div>
 
-  <!-- 背景切替ボタン -->
+  <!-- 背景切替ボタン（任意で残す） -->
   <div>
     <button onclick="changeBackground('background1.png')">背景1</button>
     <button onclick="changeBackground('background2.png')">背景2</button>
@@ -109,7 +109,10 @@
       timerInterval = setInterval(updateTimer, 1000);
     }
 
+    // ゲーム開始時に背景を background2 に変更
     function startGame(){
+      changeBackground("background2.png");  // ← 背景変更を追加！
+
       keywords = [];
       items = [];
       coins = 0;
