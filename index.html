@@ -4,8 +4,21 @@
   <meta charset="UTF-8">
   <title>学祭迷路ゲーム AR対応版</title>
   <style>
-    body { font-family: sans-serif; text-align: center; margin: 20px; }
-    #game, #cameraMode { margin-top: 20px; position: relative; }
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 20px;
+      background: url("background1.png") no-repeat center top;
+      background-size: cover;
+      background-attachment: scroll;
+      transition: background 0.5s ease; /* 背景切り替えアニメーション */
+    }
+
+    #game, #cameraMode {
+      margin-top: 20px;
+      position: relative;
+    }
+
     #timer { font-size: 18px; margin-top: 10px; }
     #inventory { margin-top: 20px; font-size: 16px; text-align: left; display: inline-block; }
     button { padding: 10px 20px; margin: 10px; font-size: 16px; }
@@ -41,13 +54,23 @@
 <body>
   <h1>学祭迷路ゲーム AR対応版</h1>
   <div id="timer"></div>
+
+  <!-- 背景切替ボタン -->
+  <div>
+    <button onclick="changeBackground('background1.png')">背景1</button>
+    <button onclick="changeBackground('background2.png')">背景2</button>
+    <button onclick="changeBackground('background3.png')">背景3</button>
+  </div>
+
   <div>
     <button onclick="startGame()">ゲームスタート</button>
     <button onclick="startCamera()">カメラモード</button>
   </div>
+
   <div id="game">
     <p>ゲームスタートボタンを押して始めてください！</p>
   </div>
+
   <div id="cameraMode" style="display:none;"></div>
   <div id="inventory"></div>
 
@@ -223,6 +246,13 @@
         const y = (location.topLeftCorner.y + location.topRightCorner.y + location.bottomLeftCorner.y + location.bottomRightCorner.y)/4;
         showArrowEffect("arrow.png", x, y);
       }
+    }
+
+    // 背景切り替え関数
+    function changeBackground(imgName){
+      document.body.style.background = `url(${imgName}) no-repeat center top`;
+      document.body.style.backgroundSize = "cover";
+      document.body.style.backgroundAttachment = "scroll";
     }
 
     window.addEventListener('load', () => {
