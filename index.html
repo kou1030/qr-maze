@@ -49,6 +49,28 @@
       50% { transform: scale(1.2); opacity: 1; }
       100% { transform: scale(1); opacity: 1; }
     }
+
+    /* カメラボタン（中央固定・最初は非表示） */
+    .camera-btn {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 30px 60px;
+      font-size: 24px;
+      background: rgba(0,0,0,0.4);
+      color: white;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: none; /* ← 最初は非表示 */
+      z-index: 999;
+    }
+
+    .camera-btn:hover {
+      background: rgba(0,0,0,0.6);
+    }
   </style>
 </head>
 <body>
@@ -64,8 +86,10 @@
 
   <div>
     <button onclick="startGame()">ゲームスタート</button>
-    <button onclick="startCamera()">カメラモード</button>
   </div>
+
+  <!-- カメラモードボタン（中央固定・ゲーム開始で表示される） -->
+  <button id="cameraBtn" class="camera-btn" onclick="startCamera()">カメラモード</button>
 
   <div id="game">
     <p>ゲームスタートボタンを押して始めてください！</p>
@@ -109,9 +133,9 @@
       timerInterval = setInterval(updateTimer, 1000);
     }
 
-    // ゲーム開始時に背景を background2 に変更
+    // ゲーム開始
     function startGame(){
-      changeBackground("background2.png");  // ← 背景変更を追加！
+      changeBackground("background2.png");  // 背景2に変更
 
       keywords = [];
       items = [];
@@ -121,6 +145,9 @@
       updateTimer();
       startTimer();
       gameDiv.innerHTML = "<p>ゲームスタート！カメラモードでQRを探してアイテムやコインをゲットしよう！</p>";
+
+      // 🎯 ゲームスタート時にカメラボタンを表示
+      document.getElementById("cameraBtn").style.display = "block";
     }
 
     function collectCoin(x, y) {
@@ -251,7 +278,7 @@
       }
     }
 
-    // 背景切り替え関数
+    // 背景切り替え関数（ボタン表示制御は削除）
     function changeBackground(imgName){
       document.body.style.background = `url(${imgName}) no-repeat center top`;
       document.body.style.backgroundSize = "cover";
@@ -265,3 +292,4 @@
   </script>
 </body>
 </html>
+
