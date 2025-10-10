@@ -28,7 +28,15 @@
              padding: 5px 10px;
              border-radius: 6px;
              z-index: 1000; }
-    #inventory {  position: fixed; top: 5px; right: 20px; font-size: 30px; text-align: left; display: inline-block; }
+    #inventory { position: fixed;   /* 画面に固定 */
+                 top: 70px;         /* 上から70px（タイマーの下あたり） */
+                 right: 20px;       /* 右から20px */
+                 font-size: 32px;   /* 文字の大きさ */
+                 color: gold;       /* 金色 */
+                 background: rgba(0,0,0,0.5); /* 半透明背景 */
+                 padding: 5px 10px;
+                 border-radius: 6px;
+                 z-index: 1000;  }
     button { padding: 10px 20px; margin: 10px; font-size: 16px; }
     #cameraMode video { width: 100%; max-width: 800px; border: 1px solid #333; }
 
@@ -134,7 +142,7 @@
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       const minutes = Math.floor(elapsed / 60);
       const seconds = elapsed % 60;
-      timerDiv.textContent = `経過時間: ${minutes}分 ${seconds}秒`;
+      timerDiv.textContent = `${minutes}分 ${seconds}秒`;
     }
 
     function startTimer() {
