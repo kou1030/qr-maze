@@ -130,13 +130,20 @@
     const inventoryDiv = document.getElementById("inventory");
 
     function updateInventory() {
-      let html = "<ul>";
-      keywords.forEach(k => html += `<li>キーワード: ${k}</li>`);
-      items.forEach(i => html += `<li>アイテム: ${i}</li>`);
-      html += `<li>${coins}</li></ul>`;
-      inventoryDiv.innerHTML = html;
-    }
+  // 現在の背景を取得
+  const bg = document.body.style.background;
 
+  if (bg.includes("background2.png")) {
+    // 背景2のときだけコイン数を表示
+    let html = "<ul>";
+    html += `<li>${coins}</li></ul>`;
+    inventoryDiv.innerHTML = html;
+    inventoryDiv.style.display = "block";
+  } else {
+    // それ以外（背景1や背景3）は非表示
+    inventoryDiv.style.display = "none";
+  }
+}
     function updateTimer() {
       if(!startTime) return;
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
