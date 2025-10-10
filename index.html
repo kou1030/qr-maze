@@ -133,7 +133,7 @@
       let html = "<ul>";
       keywords.forEach(k => html += `<li>キーワード: ${k}</li>`);
       items.forEach(i => html += `<li>アイテム: ${i}</li>`);
-      html += `<li>コイン: ${coins}</li></ul>`;
+      html += `<li>${coins}</li></ul>`;
       inventoryDiv.innerHTML = html;
     }
 
@@ -300,6 +300,13 @@
       document.body.style.background = `url(${imgName}) no-repeat center top`;
       document.body.style.backgroundSize = "cover";
       document.body.style.backgroundAttachment = "scroll";
+
+  // 🎯 コイン数（#inventory）は背景2のときだけ表示
+  if(imgName === "background2.png"){
+    document.getElementById("inventory").style.display = "block";
+  } else {
+    document.getElementById("inventory").style.display = "none";
+  }
     }
 
     window.addEventListener('load', () => {
