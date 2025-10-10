@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>学祭迷路ゲーム AR対応版</title>
+  <title>学祭迷路ゲーム </title>
   <style>
     body {
       font-family: sans-serif;
@@ -19,7 +19,15 @@
       position: relative;
     }
 
-    #timer { font-size: 18px; margin-top: 10px; }
+    #timer { position: fixed;   /* 画面に固定 */
+             top: 20px;         /* 上から20px */
+             left: 20px;       /* 右から20px */
+             font-size: 50px;
+             color: white;      /* 白文字（背景に合わせて変更可） */
+             background: rgba(0,0,0,0.0); /* 半透明の背景 */
+             padding: 5px 10px;
+             border-radius: 6px;
+             z-index: 1000; }
     #inventory {  position: fixed; top: 5px; right: 20px; font-size: 30px; text-align: left; display: inline-block; }
     button { padding: 10px 20px; margin: 10px; font-size: 16px; }
     #cameraMode video { width: 100%; max-width: 800px; border: 1px solid #333; }
@@ -75,7 +83,7 @@
   </style>
 </head>
 <body>
-  <h1>学祭迷路ゲーム AR対応版</h1>
+  <h1>学祭迷路ゲーム </h1>
   <div id="timer"></div>
 
   <!-- 背景切替ボタン（任意で残す） -->
