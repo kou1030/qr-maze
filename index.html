@@ -40,6 +40,23 @@
     button { padding: 10px 20px; margin: 10px; font-size: 16px; }
     #cameraMode video { width: 100%; max-width: 800px; border: 1px solid #333; }
 
+#startBtn {
+ position: fixed;
+  top: 70%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 30px 60px;
+  font-size: 32px;
+  background: rgba(0,0,0,5); /* 完全透明 */
+  color: rgba(255,255,255,0); /* 文字も透明 */
+  border: none;              /* 枠も消す */
+  border-radius: 20px;
+  cursor: pointer;
+  z-index: 1000;}
+
+#startBtn:hover {
+  background: orange;  /* ホバー時の色 */
+}
     /* コインジャンプアニメーション */
     .arCoin {
       position: absolute;
@@ -101,7 +118,7 @@
   </div>
 
   <div>
-    <button onclick="startGame()">ゲームスタート</button>
+    <button id="startBtn" onclick="startGame()">ゲームスタート</button>
   </div>
 
   <!-- カメラモードボタン（中央固定・ゲーム開始で表示される） -->
