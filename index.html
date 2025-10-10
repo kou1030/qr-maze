@@ -20,9 +20,9 @@
     }
 
     #timer { position: fixed;   /* 画面に固定 */
-             top: 20px;         /* 上から20px */
-             left: 20px;       /* 右から20px */
-             font-size: 50px;
+             top: 30px;         /* 上から20px */
+             left: 25px;       /* 左から20px */
+             font-size: 80px;
              color: white;      /* 白文字（背景に合わせて変更可） */
              background: rgba(0,0,0,0.0); /* 半透明の背景 */
              padding: 5px 10px;
@@ -134,7 +134,7 @@
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       const minutes = Math.floor(elapsed / 60);
       const seconds = elapsed % 60;
-      timerDiv.textContent = `経過時間: ${minutes}分 ${seconds}秒`;
+      timerDiv.textContent =  ${minutes}: ${seconds}`;
     }
 
     function startTimer() {
