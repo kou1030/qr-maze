@@ -114,7 +114,7 @@
     const inventoryDiv = document.getElementById("inventory");
 
     function updateInventory() {
-      let html = "<h3>獲得アイテム・キーワード・コイン</h3><ul>";
+      let html = "<ul>";
       keywords.forEach(k => html += `<li>キーワード: ${k}</li>`);
       items.forEach(i => html += `<li>アイテム: ${i}</li>`);
       html += `<li>コイン: ${coins}</li></ul>`;
